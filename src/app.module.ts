@@ -4,7 +4,7 @@ import {AppService} from './app.service';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {ConfigModule} from '@nestjs/config';
 
-import {databaseConfig} from './config/configuration';
+import databaseConfig from './config/database.config';
 
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -16,12 +16,11 @@ const isProd = process.env.NODE_ENV === 'production';
             isGlobal: true,
             load: [databaseConfig]
         }),
-        // typeorm 连接
+        // typeorm 连接数据库
         TypeOrmModule.forRoot({
-          database: '',
-          entities: [],
-          synchronize: true,
-          ...databaseConfig()
+            ...databaseConfig(),
+            entities: [],
+            synchronize: false
         })
     ],
     controllers: [AppController],
