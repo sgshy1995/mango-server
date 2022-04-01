@@ -8,13 +8,21 @@ import {ConfigModule} from '@nestjs/config';
 // 全局错误处理
 import {ErrorsInterceptor} from './common/errors.interceptor';
 
-// 数据库配置
+// 环境判断
 const isProd = process.env.NODE_ENV === 'production';
+
+// 数据库配置
+
 import databaseConfig from './config/database.config';
+
+// JWT配置
+import jwtConfig from "./config/jwt.config";
 
 // 引入 modules
 import {UserModule} from './app/user/user.module';
 import {StatusFilter} from './common/errors.filter';
+import { AuthModule } from './logical/auth/auth.module';
+import { UserController } from "./app/user/user.controller";
 
 @Module({
     imports: [
@@ -23,7 +31,7 @@ import {StatusFilter} from './common/errors.filter';
         ConfigModule.forRoot({
             envFilePath: isProd ? '.env.production' : '.env.development',
             isGlobal: true,
-            load: [databaseConfig]
+            load: [databaseConfig,jwtConfig]
         }),
         // typeorm 连接数据库
         TypeOrmModule.forRoot({
@@ -33,9 +41,10 @@ import {StatusFilter} from './common/errors.filter';
             autoLoadEntities: true
         }),
         // modules
-        UserModule
+        UserModule,
+        AuthModule
     ],
-    controllers: [AppController],
+    controllers: [AppController,UserController],
     providers: [
         {
             provide: APP_INTERCEPTOR,

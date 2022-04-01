@@ -17,6 +17,9 @@ export class User {
     @Column('varchar')
     password: string;
 
+    @Column('varchar')
+    salt: string;
+
     @Column('int')
     gender: number;
 

@@ -11,7 +11,7 @@ export function isUsername(s: string) {
  * @param s
  * */
 export function isNickname(s: string){
-    return /^[\u4e00-\u9fa5A-Za-z0-9-_]*$/.test(s) && s.length<=10
+    return /^[\u4e00-\u9fa5A-Za-z0-9-_]*$/.test(s) && s.length<=12
 }
 
 /**
@@ -43,7 +43,7 @@ export function isPassword(s: string) {
         console.log('错误 检验到汉字');
         hansCheck = true
     }
-    return num >= 3 && !hansCheck && s.length <= 20;
+    return num >= 2 && !hansCheck && s.length <= 20;
 }
 
 /**

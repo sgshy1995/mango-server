@@ -5,6 +5,7 @@ import {v4 as uuidV4} from 'uuid';
 import {User} from '../../db/entities/User';
 import {ResponseResult} from '../../types/result.interface';
 import {isNickname, isPassword, isUsername} from '../../utils/validate';
+import {makeSalt,encryptPassword} from "../../utils/cryptogram";
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,11 @@ export class UserService {
          */
         let responseBody = { code: 200, message: '创建成功' }
         // 校验用户信息
+        if (!user.username || !user.nickname || !user.password){
+            responseBody.code = HttpStatus.BAD_REQUEST
+            responseBody.message = '参数错误'
+            return responseBody
+        }
         const userInfoExistUsername = await this.userRepo.findOne({
                 where: {
                     username: user.username
@@ -41,24 +47,28 @@ export class UserService {
         });
         if (userInfoExistNickname) {
             responseBody.code = HttpStatus.CONFLICT
-            responseBody.message = '用户昵称已存在'
+            responseBody.message = '昵称已存在'
             return responseBody
         }
         if (!isUsername(user.username)){
             responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '用户名非法或超出长度限制'
+            responseBody.message = '用户名只能为数字、大小写英文和下划线，且在18位以内'
             return responseBody
         }
         if (!isNickname(user.nickname)){
             responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '用户昵称非法或超出长度限制'
+            responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内'
             return responseBody
         }
         if (!isPassword(user.password)){
             responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少三项，且在20位以内'
+            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内'
             return responseBody
         }
+        // 处理密码
+        const salt = makeSalt(); // 制作密码盐
+        user.password = encryptPassword(user.password, salt);  // 加密密码
+        user.salt = salt
         // 插入数据时，删除 id，以避免请求体内传入 id
         user.id !== null && user.id !== undefined && delete user.id;
         // 初始化 user
@@ -117,7 +127,7 @@ export class UserService {
      * 根据ID查询单个信息，如果不存在则抛出404异常
      * @param id ID
      */
-    private async findOneById(id: number): Promise<User> {
+    public async findOneById(id: number): Promise<User> {
         const userInfo = await this.userRepo.findOne({
             where: {
                 id
@@ -127,5 +137,17 @@ export class UserService {
             throw new HttpException(`指定id的用户不存在`, 500);
         }
         return userInfo;
+    }
+
+    /**
+     * 根据username查询单个信息，如果不存在则抛出404异常
+     * @param username username
+     */
+    public async findOneByUsername(username: string): Promise<User | undefined> {
+        return await this.userRepo.findOne({
+            where: {
+                username
+            }
+        });
     }
 }
