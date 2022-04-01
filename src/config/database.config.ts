@@ -5,11 +5,11 @@ const databaseConfig = () => {
         DATABASE_TYPE,
         DATABASE_USERNAME,
         DATABASE_PASSWORD,
-        DATABASE_CHOOSE
+        DATABASE_NAME
     } = process.env;
     return {
         host: DATABASE_HOST,
-        database: DATABASE_CHOOSE,
+        database: DATABASE_NAME,
         port: parseInt(DATABASE_PORT, 10) || 3306,
         type: DATABASE_TYPE,
         username: DATABASE_USERNAME,
