@@ -1,16 +1,19 @@
 import { HttpStatus, Injectable } from "@nestjs/common";
-import { UserService } from "../../app/user/user.service";
+import { UserService } from "../app/user/user.service";
 import { JwtService } from '@nestjs/jwt';
-import { encryptPassword } from '../../utils/cryptogram';
+import { encryptPassword } from '../utils/cryptogram';
+import {User} from '../db/entities/User';
+import {ResponseResult} from '../types/result.interface';
+import {RedisInstance} from '../db/redis/redis';
 
 @Injectable()
 export class AuthService {
   constructor(private readonly usersService: UserService, private readonly jwtService: JwtService) {}
 
   // JWT验证 - Step 2: 校验用户信息
-  async validateUser(username: string, password: string): Promise<any> {
-    console.log('JWT验证 - Step 2: 校验用户信息');
+  async validateUser(username: string, password: string): Promise<{code: number, user: User | null}> {
     const user = await this.usersService.findOneByUsername(username);
+    console.log('JWT验证 - Step 2: 校验用户信息',user,'password',password);
     if (user) {
       const hashedPassword = user.password;
       const salt = user.salt;
@@ -41,12 +44,16 @@ export class AuthService {
   }
 
   // JWT验证 - Step 3: 处理 jwt 签证
-  async certificate(user: any) {
+  async certificate(user: User): Promise<ResponseResult> {
     const payload = { username: user.username, sub: user.id, nickname: user.nickname, primary_key: user.primary_key };
     console.log('JWT验证 - Step 3: 处理 jwt 签证');
     console.log('payload',payload)
     try {
       const token = this.jwtService.sign(payload);
+      // 实例化 redis
+      const redis = await RedisInstance.initRedis('auth.certificate', 0);
+      // 将用户信息和 token 存入 redis，并设置失效时间，语法：[key, seconds, value]
+      await redis.setex(`${user.id}-${user.username}`, 300, `${token}`);
       return {
         code: HttpStatus.OK,
         data: {

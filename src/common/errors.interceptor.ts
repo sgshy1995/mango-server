@@ -8,12 +8,12 @@ export class ErrorsInterceptor implements NestInterceptor {
         // 异常拦截器，拦截每个请求中的异常，目的是将异常码和异常信息改写为 { code: xxx, message: xxx } 类型
         return next.handle().pipe(catchError((error, caught): any => {
             if (error instanceof HttpException) {
-                return Promise.resolve({
+                return Promise.reject({
                     code: error.getStatus(),
                     message: error.getResponse()
                 });
             }
-            return Promise.resolve({
+            return Promise.reject({
                 code: 500,
                 message: error.toString()
             });

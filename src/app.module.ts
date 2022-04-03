@@ -18,10 +18,13 @@ import databaseConfig from './config/database.config';
 // JWT配置
 import jwtConfig from "./config/jwt.config";
 
+// Redis配置
+import redisConfig from './config/redis.config';
+
 // 引入 modules
 import {UserModule} from './app/user/user.module';
 import {StatusFilter} from './common/errors.filter';
-import { AuthModule } from './logical/auth/auth.module';
+import { AuthModule } from './auth/auth.module';
 import { UserController } from "./app/user/user.controller";
 
 @Module({
@@ -31,7 +34,7 @@ import { UserController } from "./app/user/user.controller";
         ConfigModule.forRoot({
             envFilePath: isProd ? '.env.production' : '.env.development',
             isGlobal: true,
-            load: [databaseConfig,jwtConfig]
+            load: [databaseConfig,jwtConfig,redisConfig]
         }),
         // typeorm 连接数据库
         TypeOrmModule.forRoot({

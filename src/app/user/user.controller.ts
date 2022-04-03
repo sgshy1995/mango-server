@@ -3,9 +3,10 @@ import { Response } from 'express';
 import {ResponseResult} from '../../types/result.interface';
 import {User} from '../../db/entities/User';
 import { UserService } from './user.service';
-import {AuthService} from "../../logical/auth/auth.service";
+import {AuthService} from "../../auth/auth.service";
 
 import { AuthGuard } from '@nestjs/passport';
+import {TokenGuard} from '../../guards/token.guard';
 
 @Controller('user')
 export class UserController {
@@ -35,8 +36,22 @@ export class UserController {
     }
 
     @Post()
-    async createUser(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<ResponseResult | void> {
+    async createUser(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<void> {
+        const bodyCopy = Object.assign({},User)
         const res = await this.UserService.createUser(User)
+        if (res.code === HttpStatus.CREATED) {
+            const authResult = await this.authService.validateUser(bodyCopy.username, bodyCopy.password);
+            res.data = (await this.authService.certificate(authResult.user)).data;
+        }
+        response.status(res.code)
+        response.send(res)
+    }
+
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
+    @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
+    @Get(':username')
+    async findOneUserByUsername(@Param('username') username: string, @Res({ passthrough: true }) response: Response): Promise<void> {
+        const res = await this.UserService.findOneUserByUsername(username);
         response.status(res.code)
         response.send(res)
     }
@@ -53,12 +68,5 @@ export class UserController {
     async updateUser(@Param('id') id: number, @Body() User: User): Promise<ResponseResult> {
         await this.UserService.updateCat(id, User);
         return { code: 200, message: '更新成功' };
-    }
-
-    @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
-    @Get(':id')
-    async findOneUser(@Param('id') id: number): Promise<ResponseResult> {
-        const data = await this.UserService.findOneUser(id);
-        return { code: 200, message: '查询成功', data };
     }
 }

@@ -1,11 +1,11 @@
 import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository} from 'typeorm';
+import {Repository, FindOptionsSelect} from 'typeorm';
 import {v4 as uuidV4} from 'uuid';
 import {User} from '../../db/entities/User';
 import {ResponseResult} from '../../types/result.interface';
 import {isNickname, isPassword, isUsername} from '../../utils/validate';
-import {makeSalt,encryptPassword} from "../../utils/cryptogram";
+import {makeSalt, encryptPassword} from '../../utils/cryptogram';
 
 @Injectable()
 export class UserService {
@@ -23,22 +23,22 @@ export class UserService {
         /**
          * 创建新的实体实例，并将此对象的所有实体属性复制到新实体中。 请注意，它仅复制实体模型中存在的属性。
          */
-        let responseBody = { code: 200, message: '创建成功' }
+        let responseBody = {code: 200, message: '创建成功'};
         // 校验用户信息
-        if (!user.username || !user.nickname || !user.password){
-            responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '参数错误'
-            return responseBody
+        if (!user.username || !user.nickname || !user.password) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '参数错误';
+            return responseBody;
         }
         const userInfoExistUsername = await this.userRepo.findOne({
-                where: {
-                    username: user.username
-                }
-            });
+            where: {
+                username: user.username
+            }
+        });
         if (userInfoExistUsername) {
-            responseBody.code = HttpStatus.CONFLICT
-            responseBody.message = '用户名已存在'
-            return responseBody
+            responseBody.code = HttpStatus.CONFLICT;
+            responseBody.message = '用户名已存在';
+            return responseBody;
         }
         const userInfoExistNickname = await this.userRepo.findOne({
             where: {
@@ -46,29 +46,29 @@ export class UserService {
             }
         });
         if (userInfoExistNickname) {
-            responseBody.code = HttpStatus.CONFLICT
-            responseBody.message = '昵称已存在'
-            return responseBody
+            responseBody.code = HttpStatus.CONFLICT;
+            responseBody.message = '昵称已存在';
+            return responseBody;
         }
-        if (!isUsername(user.username)){
-            responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '用户名只能为数字、大小写英文和下划线，且在18位以内'
-            return responseBody
+        if (!isUsername(user.username)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '用户名只能为数字、大小写英文和下划线，且在18位以内';
+            return responseBody;
         }
-        if (!isNickname(user.nickname)){
-            responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内'
-            return responseBody
+        if (!isNickname(user.nickname)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内';
+            return responseBody;
         }
-        if (!isPassword(user.password)){
-            responseBody.code = HttpStatus.BAD_REQUEST
-            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内'
-            return responseBody
+        if (!isPassword(user.password)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内';
+            return responseBody;
         }
         // 处理密码
         const salt = makeSalt(); // 制作密码盐
         user.password = encryptPassword(user.password, salt);  // 加密密码
-        user.salt = salt
+        user.salt = salt;
         // 插入数据时，删除 id，以避免请求体内传入 id
         user.id !== null && user.id !== undefined && delete user.id;
         // 初始化 user
@@ -77,10 +77,10 @@ export class UserService {
         // primary_key with uuid
         user.primary_key = uuidV4().toString();
 
-        responseBody.code = HttpStatus.CREATED
-        responseBody.message = '注册成功'
+        responseBody.code = HttpStatus.CREATED;
+        responseBody.message = '注册成功';
 
-        await this.userRepo.save(user)
+        await this.userRepo.save(user);
 
         return responseBody;
 
@@ -119,35 +119,68 @@ export class UserService {
      *
      * @param id ID
      */
-    async findOneUser(id: number): Promise<User> {
-        return this.findOneById(id);
+    async findOneUserById(id: number): Promise<ResponseResult> {
+        const userFind = await this.findOneById(id, {
+            username: true,
+            primary_key: true,
+            nickname: true,
+            avatar: true,
+            phone: true,
+            email: true,
+            id: true
+        });
+        return userFind ?
+            {
+                code: HttpStatus.OK,
+                message: '查询成功',
+                data: userFind
+            } : {
+                code: HttpStatus.NOT_FOUND,
+                message: '用户不存在'
+            }
+    }
+
+    /**
+     * 根据 username 查询
+     *
+     * @param username 根据 username 查询
+     */
+    async findOneUserByUsername(username: string): Promise<ResponseResult> {
+        const userFind = await this.findOneByUsername(username, {
+            username: true,
+            primary_key: true,
+            nickname: true,
+            avatar: true,
+            phone: true,
+            email: true,
+            id: true
+        });
+        return userFind ?
+            {
+                code: HttpStatus.OK,
+                message: '查询成功',
+                data: userFind
+            } : {
+                code: HttpStatus.NOT_FOUND,
+                message: '用户不存在'
+            }
     }
 
     /**
      * 根据ID查询单个信息，如果不存在则抛出404异常
      * @param id ID
+     * @param select select conditions
      */
-    public async findOneById(id: number): Promise<User> {
-        const userInfo = await this.userRepo.findOne({
-            where: {
-                id
-            }
-        });
-        if (!userInfo) {
-            throw new HttpException(`指定id的用户不存在`, 500);
-        }
-        return userInfo;
+    public async findOneById(id: number, select?: FindOptionsSelect<User>): Promise<User | undefined> {
+        return await this.userRepo.findOne({where: {id}, select});
     }
 
     /**
      * 根据username查询单个信息，如果不存在则抛出404异常
      * @param username username
+     @param select select conditions
      */
-    public async findOneByUsername(username: string): Promise<User | undefined> {
-        return await this.userRepo.findOne({
-            where: {
-                username
-            }
-        });
+    public async findOneByUsername(username: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
+        return await this.userRepo.findOne({where: {username}, select});
     }
 }
