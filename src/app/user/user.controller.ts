@@ -95,6 +95,7 @@ export class UserController {
         response.send(res)
     }
 
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Delete(':id')
     async deleteUser(@Param('id') id: number): Promise<ResponseResult> {
@@ -102,6 +103,7 @@ export class UserController {
         return { code: 200, message: '删除成功' };
     }
 
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Put(':id')
     async updateUser(@Param('id') id: number, @Body() User: User): Promise<ResponseResult> {
