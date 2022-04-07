@@ -5,6 +5,7 @@ import { encryptPassword } from '../utils/cryptogram';
 import {User} from '../db/entities/User';
 import {ResponseResult} from '../types/result.interface';
 import {RedisInstance} from '../db/redis/redis';
+import RedisConfig from "../config/redis.config";
 
 @Injectable()
 export class AuthService {
@@ -68,5 +69,19 @@ export class AuthService {
         message: `账号或密码错误`,
       };
     }
+  }
+
+  // JWT 注销签证
+  async dropJwt(user: User): Promise<ResponseResult> {
+    const redis = await RedisInstance.initRedis('TokenGuard.canActivate', RedisConfig().db);
+    const key = `${user.id}-${user.username}`;
+    const cache = await redis.get(key);
+    if (cache) {
+      await redis.del(key)
+    }
+    return {
+      code: HttpStatus.OK,
+      message: `注销成功`
+    };
   }
 }

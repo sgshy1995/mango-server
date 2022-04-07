@@ -65,6 +65,6 @@ export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(PathMiddleware)
-            .forRoutes({ path: 'users/upload', method: RequestMethod.POST });
+            .forRoutes({ path: 'user/upload', method: RequestMethod.POST });
     }
 }

@@ -9,7 +9,6 @@ import {AuthService} from "../../auth/auth.service";
 import { AuthGuard } from '@nestjs/passport';
 import {TokenGuard} from '../../guards/token.guard';
 
-import * as fs from 'fs';
 import * as path from 'path';
 import * as nuid from 'nuid';
 import moment = require("moment");
@@ -44,7 +43,7 @@ export class UserController {
     async uploadFile(@UploadedFile() file,@Res({ passthrough: true }) response: Response,@Req() request: RequestParams) {
         console.log(file);
         console.log(request.user);
-        await this.UserService.updateUser(request.user.id, {...request.user,avatar: file.path});
+        await this.UserService.updateUser(request.user.id, {...request.user,avatar: file.path.split(path.sep).join('/')});
         const res = {
             code: HttpStatus.OK,
             message: '上传成功'
@@ -72,6 +71,15 @@ export class UserController {
                 response.send(resDefault)
                 break
         }
+    }
+
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
+    @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
+    @Post('logout')
+    async logout(@Body() User: User,@Res({ passthrough: true }) response: Response) {
+        const res = await this.authService.dropJwt(User);
+        response.status(res.code)
+        response.send(res)
     }
 
     @Post()
