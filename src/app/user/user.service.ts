@@ -107,7 +107,7 @@ export class UserService {
      * @param id ID
      * @param user User 实体对象
      */
-    async updateCat(id: number, user: User): Promise<void> {
+    async updateUser(id: number, user: User): Promise<void> {
         await this.findOneById(id);
         // 更新数据时，删除 id，以避免请求体内传入 id
         user.id !== null && user.id !== undefined && delete user.id;

@@ -1,5 +1,6 @@
-import {Body, Controller, Delete, Get, Inject, Param, Post, Put, Res, HttpStatus, UseGuards} from '@nestjs/common';
-import { Response } from 'express';
+import {Body, Controller, Delete, Get, Inject, Param, Post, Put, Res, Req, HttpStatus, UseGuards, UseInterceptors ,UploadedFile} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response, Request } from 'express';
 import {ResponseResult} from '../../types/result.interface';
 import {User} from '../../db/entities/User';
 import { UserService } from './user.service';
@@ -8,11 +9,49 @@ import {AuthService} from "../../auth/auth.service";
 import { AuthGuard } from '@nestjs/passport';
 import {TokenGuard} from '../../guards/token.guard';
 
+import * as fs from 'fs';
+import * as path from 'path';
+import * as nuid from 'nuid';
+import moment = require("moment");
+
+import multer = require('multer');
+
+interface RequestParams extends Request{
+    user: User
+}
+
 @Controller('user')
 export class UserController {
     constructor(
       private readonly UserService: UserService,private readonly authService: AuthService,
     ) { }
+
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
+    @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
+    @Post('upload')
+    @UseInterceptors(FileInterceptor('file',{
+        storage: multer.diskStorage({
+            destination: (req, file, cb) => {
+                cb(null, path.join(process.env.UPLOAD_PATH,`/users/${moment(new Date(),'YYYY-MM-DD').format('YYYY-MM-DD')}`));
+            },
+            filename: (req, file, cb) => {
+                // 自定义文件名
+                const filename = `${nuid.next()}.${file.mimetype.split('/')[1]}`;
+                return cb(null, filename);
+            },
+        }),
+    }))
+    async uploadFile(@UploadedFile() file,@Res({ passthrough: true }) response: Response,@Req() request: RequestParams) {
+        console.log(file);
+        console.log(request.user);
+        await this.UserService.updateUser(request.user.id, {...request.user,avatar: file.path});
+        const res = {
+            code: HttpStatus.OK,
+            message: '上传成功'
+        }
+        response.status(res.code)
+        response.send(res)
+    }
 
     @Post('login')
     async login(@Body() User: User,@Res({ passthrough: true }) response: Response) {
@@ -66,7 +105,7 @@ export class UserController {
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Put(':id')
     async updateUser(@Param('id') id: number, @Body() User: User): Promise<ResponseResult> {
-        await this.UserService.updateCat(id, User);
+        await this.UserService.updateUser(id, User);
         return { code: 200, message: '更新成功' };
     }
 }

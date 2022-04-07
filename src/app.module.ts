@@ -1,9 +1,10 @@
-import {Module} from '@nestjs/common';
+import {Module, MiddlewareConsumer, RequestMethod} from '@nestjs/common';
 import { APP_INTERCEPTOR,APP_FILTER } from '@nestjs/core';
 import {AppController} from './app.controller';
 import {AppService} from './app.service';
 import {TypeOrmModule} from '@nestjs/typeorm';
 import {ConfigModule} from '@nestjs/config';
+import {PathMiddleware} from './middleware/path.middleware';
 
 // 全局错误处理
 import {ErrorsInterceptor} from './common/errors.interceptor';
@@ -61,4 +62,9 @@ import { UserController } from "./app/user/user.controller";
     ],
 })
 export class AppModule {
+    configure(consumer: MiddlewareConsumer) {
+        consumer
+            .apply(PathMiddleware)
+            .forRoutes({ path: 'users/upload', method: RequestMethod.POST });
+    }
 }

@@ -22,6 +22,29 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+## .env File
+
+`.env.development` refers to development env and `.env.production` refers to production env.
+
+```yaml
+# database
+DATABASE_TYPE=mysql
+DATABASE_NAME=xxx
+DATABASE_HOST=localhost
+DATABASE_PORT=3306
+DATABASE_USERNAME=root
+DATABASE_PASSWORD=xxx
+# secret_key to generate jwt
+SECRET_KEY=xxx_xxx_xxx
+# redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_PASSWORD=
+# upload path
+UPLOAD_PATH=xxx/xxx/
+```
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
