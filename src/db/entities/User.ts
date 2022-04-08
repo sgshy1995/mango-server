@@ -38,6 +38,12 @@ export class User {
     @Column('varchar')
     primary_key: string;
 
+    @Column('int')
+    team_id: number;
+
+    @Column('varchar')
+    team_name: string;
+
     @CreateDateColumn()
     created_at: Date;
 

@@ -1,11 +1,11 @@
-import {HttpException, HttpStatus, Injectable} from '@nestjs/common';
+import {HttpStatus, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {Repository, FindOptionsSelect} from 'typeorm';
+import {FindOptionsSelect, getRepository, Repository} from 'typeorm';
 import {v4 as uuidV4} from 'uuid';
 import {User} from '../../db/entities/User';
 import {ResponseResult} from '../../types/result.interface';
 import {isNickname, isPassword, isUsername} from '../../utils/validate';
-import {makeSalt, encryptPassword} from '../../utils/cryptogram';
+import {encryptPassword, makeSalt} from '../../utils/cryptogram';
 
 @Injectable()
 export class UserService {
@@ -112,6 +112,7 @@ export class UserService {
         // 更新数据时，删除 id，以避免请求体内传入 id
         user.id !== null && user.id !== undefined && delete user.id;
         await this.userRepo.update(id, user);
+        console.log('用户已更新', user);
     }
 
     /**
@@ -127,7 +128,9 @@ export class UserService {
             avatar: true,
             phone: true,
             email: true,
-            id: true
+            id: true,
+            team_id: true,
+            team_name: true
         });
         return userFind ?
             {
@@ -137,7 +140,7 @@ export class UserService {
             } : {
                 code: HttpStatus.NOT_FOUND,
                 message: '用户不存在'
-            }
+            };
     }
 
     /**
@@ -153,7 +156,9 @@ export class UserService {
             avatar: true,
             phone: true,
             email: true,
-            id: true
+            id: true,
+            team_id: true,
+            team_name: true
         });
         return userFind ?
             {
@@ -163,11 +168,11 @@ export class UserService {
             } : {
                 code: HttpStatus.NOT_FOUND,
                 message: '用户不存在'
-            }
+            };
     }
 
     /**
-     * 根据ID查询单个信息，如果不存在则抛出404异常
+     * 根据 ID 查询单个信息，如果不存在则抛出404异常
      * @param id ID
      * @param select select conditions
      */
@@ -176,11 +181,34 @@ export class UserService {
     }
 
     /**
-     * 根据username查询单个信息，如果不存在则抛出404异常
+     * 根据 ids 查询单个信息，如果不存在则抛出404异常
+     * @param ids ids
+     * @param select select conditions
+     */
+    public async findManyByIds(ids: number[], select?: FindOptionsSelect<User>): Promise<User[] | undefined> {
+        return await getRepository(User)
+            .createQueryBuilder('user')
+            .select(['user.id', 'user.username', 'user.avatar', 'user.nickname'])
+            .where('user.id IN (:...ids)', {ids})
+            .orderBy('user.id')
+            .getMany();
+    }
+
+    /**
+     * 根据 username 查询单个信息，如果不存在则抛出404异常
      * @param username username
      @param select select conditions
      */
     public async findOneByUsername(username: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
         return await this.userRepo.findOne({where: {username}, select});
+    }
+
+    /**
+     * 根据 nickname 查询单个信息，如果不存在则抛出404异常
+     * @param nickname nickname
+     @param select select conditions
+     */
+    public async findOneByNickname(nickname: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
+        return await this.userRepo.findOne({where: {nickname}, select});
     }
 }

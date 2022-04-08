@@ -40,7 +40,7 @@ export class UserController {
             },
         }),
     }))
-    async uploadFile(@UploadedFile() file,@Res({ passthrough: true }) response: Response,@Req() request: RequestParams) {
+    async uploadFile(@UploadedFile() file,@Res({ passthrough: true }) response: Response,@Req() request: RequestParams): Promise<Response | void | Record<string, any>> {
         console.log(file);
         console.log(request.user);
         await this.UserService.updateUser(request.user.id, {...request.user,avatar: file.path.split(path.sep).join('/')});
@@ -49,41 +49,39 @@ export class UserController {
             message: '上传成功'
         }
         response.status(res.code)
-        response.send(res)
+        return res
     }
 
     @Post('login')
-    async login(@Body() User: User,@Res({ passthrough: true }) response: Response) {
+    async login(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         console.log('JWT验证 - Step 1: 用户请求登录');
         const authResult = await this.authService.validateUser(User.username, User.password);
         switch (authResult.code) {
             case 1:
                 const resRight = await this.authService.certificate(authResult.user);
                 response.status(resRight.code)
-                response.send(resRight)
-                break
+                return resRight
             default:
                 const resDefault = {
                     code: HttpStatus.BAD_REQUEST,
                     message: `账号或密码不正确`,
                 };
                 response.status(resDefault.code)
-                response.send(resDefault)
-                break
+                return resDefault
         }
     }
 
     @UseGuards(new TokenGuard()) // 使用 token redis 验证
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Post('logout')
-    async logout(@Body() User: User,@Res({ passthrough: true }) response: Response) {
+    async logout(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         const res = await this.authService.dropJwt(User);
         response.status(res.code)
-        response.send(res)
+        return res
     }
 
     @Post()
-    async createUser(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<void> {
+    async createUser(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         const bodyCopy = Object.assign({},User)
         const res = await this.UserService.createUser(User)
         if (res.code === HttpStatus.CREATED) {
@@ -91,16 +89,16 @@ export class UserController {
             res.data = (await this.authService.certificate(authResult.user)).data;
         }
         response.status(res.code)
-        response.send(res)
+        return res
     }
 
     @UseGuards(new TokenGuard()) // 使用 token redis 验证
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Get(':username')
-    async findOneUserByUsername(@Param('username') username: string, @Res({ passthrough: true }) response: Response): Promise<void> {
+    async findOneUserByUsername(@Param('username') username: string, @Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         const res = await this.UserService.findOneUserByUsername(username);
         response.status(res.code)
-        response.send(res)
+        return res
     }
 
     @UseGuards(new TokenGuard()) // 使用 token redis 验证

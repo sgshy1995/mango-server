@@ -24,6 +24,7 @@ import redisConfig from './config/redis.config';
 
 // 引入 modules
 import {UserModule} from './app/user/user.module';
+import {TeamModule} from './app/team/team.module';
 import {StatusFilter} from './common/errors.filter';
 import { AuthModule } from './auth/auth.module';
 import { UserController } from "./app/user/user.controller";
@@ -46,6 +47,7 @@ import { UserController } from "./app/user/user.controller";
         }),
         // modules
         UserModule,
+        TeamModule,
         AuthModule
     ],
     controllers: [AppController,UserController],
