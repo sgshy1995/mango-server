@@ -1,5 +1,5 @@
 import {Module, MiddlewareConsumer, RequestMethod} from '@nestjs/common';
-import { APP_INTERCEPTOR,APP_FILTER } from '@nestjs/core';
+import {APP_INTERCEPTOR, APP_FILTER} from '@nestjs/core';
 import {AppController} from './app.controller';
 import {AppService} from './app.service';
 import {TypeOrmModule} from '@nestjs/typeorm';
@@ -17,7 +17,7 @@ const isProd = process.env.NODE_ENV === 'production';
 import databaseConfig from './config/database.config';
 
 // JWT配置
-import jwtConfig from "./config/jwt.config";
+import jwtConfig from './config/jwt.config';
 
 // Redis配置
 import redisConfig from './config/redis.config';
@@ -25,9 +25,11 @@ import redisConfig from './config/redis.config';
 // 引入 modules
 import {UserModule} from './app/user/user.module';
 import {TeamModule} from './app/team/team.module';
+import {PersonalChargeModule} from './app/personal_charge/personal.charge.module';
+import {TeamChargeModule} from './app/team_charge/team.charge.module';
 import {StatusFilter} from './common/errors.filter';
-import { AuthModule } from './auth/auth.module';
-import { UserController } from "./app/user/user.controller";
+import {AuthModule} from './auth/auth.module';
+import {UserController} from './app/user/user.controller';
 
 @Module({
     imports: [
@@ -36,7 +38,7 @@ import { UserController } from "./app/user/user.controller";
         ConfigModule.forRoot({
             envFilePath: isProd ? '.env.production' : '.env.development',
             isGlobal: true,
-            load: [databaseConfig,jwtConfig,redisConfig]
+            load: [databaseConfig, jwtConfig, redisConfig]
         }),
         // typeorm 连接数据库
         TypeOrmModule.forRoot({
@@ -48,9 +50,11 @@ import { UserController } from "./app/user/user.controller";
         // modules
         UserModule,
         TeamModule,
+        PersonalChargeModule,
+        TeamChargeModule,
         AuthModule
     ],
-    controllers: [AppController,UserController],
+    controllers: [AppController, UserController],
     providers: [
         {
             provide: APP_INTERCEPTOR,
@@ -67,6 +71,6 @@ export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(PathMiddleware)
-            .forRoutes({ path: 'user/upload', method: RequestMethod.POST });
+            .forRoutes({path: 'user/upload', method: RequestMethod.POST});
     }
 }
