@@ -53,8 +53,13 @@ export class UserController {
     }
 
     @Post('login')
-    async login(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
+    async login(@Body() User: User & {capture: string, device_id: string}, @Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         console.log('JWT验证 - Step 1: 用户请求登录');
+        const validateCaptureResult = await this.authService.validateCapture(User.device_id,User.capture)
+        if (validateCaptureResult){
+            response.status(validateCaptureResult.code)
+            return validateCaptureResult
+        }
         const authResult = await this.authService.validateUser(User.username, User.password);
         switch (authResult.code) {
             case 1:
@@ -81,8 +86,13 @@ export class UserController {
     }
 
     @Post()
-    async createUser(@Body() User: User,@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
+    async createUser(@Body() User: User & {capture: string, device_id: string},@Res({ passthrough: true }) response: Response): Promise<Response | void | Record<string, any>> {
         const bodyCopy = Object.assign({},User)
+        const validateCaptureResult = await this.authService.validateCapture(User.device_id,User.capture)
+        if (validateCaptureResult){
+            response.status(validateCaptureResult.code)
+            return validateCaptureResult
+        }
         const res = await this.UserService.createUser(User)
         if (res.code === HttpStatus.CREATED) {
             const authResult = await this.authService.validateUser(bodyCopy.username, bodyCopy.password);

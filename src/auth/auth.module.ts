@@ -7,6 +7,7 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import jwtConfig from '../config/jwt.config';
 import { ConfigModule } from "@nestjs/config";
+import {AuthController} from './auth.controller';
 
 // 环境判断
 const isProd = process.env.NODE_ENV === 'production';
@@ -27,6 +28,7 @@ const isProd = process.env.NODE_ENV === 'production';
     }),
     UserModule
   ],
+  controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
