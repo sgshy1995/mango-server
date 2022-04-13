@@ -42,3 +42,6 @@ public/
 
 # cert dir
 cert/
+
+# screenlog
+screenlog.*
