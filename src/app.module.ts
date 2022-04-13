@@ -26,7 +26,9 @@ import redisConfig from './config/redis.config';
 import {UserModule} from './app/user/user.module';
 import {TeamModule} from './app/team/team.module';
 import {PersonalChargeModule} from './app/personal_charge/personal.charge.module';
+import {PersonalChargeTypeModule} from './app/personal_charge_type/personal.charge.type.module';
 import {TeamChargeModule} from './app/team_charge/team.charge.module';
+import {TeamChargeTypeModule} from './app/team_charge_type/team.charge.type.module';
 import {StatusFilter} from './common/errors.filter';
 import {AuthModule} from './auth/auth.module';
 import {UserController} from './app/user/user.controller';
@@ -51,7 +53,9 @@ import {UserController} from './app/user/user.controller';
         UserModule,
         TeamModule,
         PersonalChargeModule,
+        PersonalChargeTypeModule,
         TeamChargeModule,
+        TeamChargeTypeModule,
         AuthModule
     ],
     controllers: [AppController, UserController],

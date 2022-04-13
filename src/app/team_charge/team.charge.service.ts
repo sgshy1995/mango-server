@@ -215,14 +215,15 @@ export class TeamChargeService {
      * @param findOptions findOptions
      @param select select conditions
      */
-    public async findMany(findOptions: TeamCharge & { charge_time_range: string[] }, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
+    public async findMany(findOptions: TeamCharge & { charge_time_range?: string[] }, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
         return await this.teamChargeRepo.find({
             where: {
                 status: 1,
                 ...findOptions,
                 charge_time: (findOptions.charge_time_range && findOptions.charge_time_range.length && findOptions.charge_time_range.length === 2) ?
                     Between(findOptions.charge_time_range[0], findOptions.charge_time_range[1]) :
-                    findOptions.charge_time
+                    findOptions.charge_time ?
+                        findOptions.charge_time : undefined
             }, order: {
                 created_at: {
                     direction: 'asc'
@@ -238,6 +239,15 @@ export class TeamChargeService {
      */
     public async findManyByCreatedBy(created_by: number, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
         return await this.teamChargeRepo.find({where: {created_by, status: 1}, select});
+    }
+
+    /**
+     * 根据 team_id 查询多个信息，如果不存在则抛出404异常
+     * @param team_id team_id
+     @param select select conditions
+     */
+    public async findManyByTeamId(team_id: number, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
+        return await this.teamChargeRepo.find({where: {team_id, status: 1}, select});
     }
 
     /**

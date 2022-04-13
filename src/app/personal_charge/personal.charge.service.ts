@@ -210,7 +210,8 @@ export class PersonalChargeService {
                 ...findOptions,
                 charge_time: (findOptions.charge_time_range && findOptions.charge_time_range.length && findOptions.charge_time_range.length === 2) ?
                     Between(findOptions.charge_time_range[0], findOptions.charge_time_range[1]) :
-                    findOptions.charge_time
+                    findOptions.charge_time ?
+                        findOptions.charge_time : undefined
             }, order: {
                 created_at: {
                     direction: 'asc'

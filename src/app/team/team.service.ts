@@ -142,6 +142,13 @@ export class TeamService {
         });
         const userIds = teamFind.members.split(',')
         const users = await this.usersService.findManyByIds(userIds.map(id=>Number(id)))
+        // 始终将 owner 放在第一位
+        const userHasOwnTeam = users.find(user=>user.id===id)
+        const userHasOwnTeamIndex = users.findIndex(user=>user.id===id)
+        if (userHasOwnTeam) {
+            users.splice(userHasOwnTeamIndex,1)
+            users.unshift(userHasOwnTeam)
+        }
         return teamFind ?
             {
                 code: HttpStatus.OK,
