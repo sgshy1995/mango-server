@@ -1,3 +1,5 @@
+// noinspection DuplicatedCode
+
 import {HttpStatus, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, FindOptionsSelect, Between} from 'typeorm';
@@ -6,7 +8,6 @@ import {ResponseResult} from '../../types/result.interface';
 import {UserService} from '../user/user.service';
 import {PersonalChargeService} from '../personal_charge/personal.charge.service';
 import {v4 as uuidV4} from 'uuid';
-import {TeamCharge} from '../../db/entities/TeamCharge';
 
 @Injectable()
 export class PersonalChargeTypeService {
@@ -44,10 +45,18 @@ export class PersonalChargeTypeService {
         }
 
         // 校验 name 信息
-        const nameFind = await this.findOneByName(personalChargeType.name, personalChargeType.created_by);
+        const nameFind = await this.findOneByName(personalChargeType.name, personalChargeType.created_by) || await this.findOneByName(personalChargeType.name, 0);
         if (nameFind) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';
+            return responseBody;
+        }
+
+        // 校验数量信息
+        const readyFind =  await this.findManyByCreatedBy(personalChargeType.created_by);
+        if (readyFind && readyFind.length >= 20) {
+            responseBody.code = HttpStatus.CONFLICT;
+            responseBody.message = '最多添加20个分类';
             return responseBody;
         }
 
@@ -87,11 +96,11 @@ export class PersonalChargeTypeService {
         }
         personalChargeType.status = 0;
         // 同步删除所有记录
-        const personalCharges = await this.personalChargeService.findManyByCreatedBy(personalChargeType.created_by);
+        const personalCharges = await this.personalChargeService.findManyByChargeType(personalChargeType.realname, personalChargeType.created_by);
         await Promise.all(
             personalCharges.map(async (item) => {
                 item.status = 0;
-                return await this.personalChargeService.updatePersonalCharge(item.id, item.charge_num, item.remark);
+                return await this.personalChargeService.updatePersonalCharge(item.id, item.charge_num, item.remark, item.status);
             })
         );
         // 更新数据时，删除 id，以避免请求体内传入 id
@@ -121,7 +130,7 @@ export class PersonalChargeTypeService {
             return responseBody;
         }
         // 校验 name 信息
-        const nameFind = await this.findOneByName(personalChargeType.name, personalChargeType.created_by);
+        const nameFind = await this.findOneByName(name, personalChargeType.created_by) || await this.findOneByName(name, 0);
         if (nameFind) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';

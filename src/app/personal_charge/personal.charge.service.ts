@@ -80,8 +80,9 @@ export class PersonalChargeService {
      * @param id ID
      * @param charge_num charge_num 费用金额
      * @param remark remark 备注
+     * @param status status 状态
      */
-    async updatePersonalCharge(id: number, charge_num: number, remark: string): Promise<ResponseResult> {
+    async updatePersonalCharge(id: number, charge_num: number, remark: string, status?: number): Promise<ResponseResult> {
         let responseBody = {code: HttpStatus.OK, message: '更新成功'};
         const personalCharge = await this.findOneById(id);
         if (!personalCharge) {
@@ -98,6 +99,7 @@ export class PersonalChargeService {
         personalCharge.id !== null && personalCharge.id !== undefined && delete personalCharge.id;
         personalCharge.charge_num = charge_num;
         personalCharge.remark = remark;
+        (status !== undefined && status !== null) ? personalCharge.status = status : null;
 
         await this.personalChargeRepo.update(id, personalCharge);
         return responseBody;
@@ -227,6 +229,16 @@ export class PersonalChargeService {
      */
     public async findManyByCreatedBy(created_by: number, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
         return await this.personalChargeRepo.find({where: {created_by, status: 1}, select});
+    }
+
+    /**
+     * 根据 charge_type 查询多个信息，如果不存在则抛出404异常
+     * @param charge_type charge_type
+     * @param created_by created_by
+     @param select select conditions
+     */
+    public async findManyByChargeType(charge_type: string, created_by: number, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
+        return await this.personalChargeRepo.find({where: {charge_type, created_by, status: 1}, select});
     }
 
     /**

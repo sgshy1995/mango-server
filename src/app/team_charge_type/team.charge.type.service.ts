@@ -53,10 +53,18 @@ export class TeamChargeTypeService {
         }
 
         // 校验 name 信息
-        const nameFind = await this.findOneByName(teamChargeType.name,teamChargeType.team_id)
+        const nameFind = await this.findOneByName(teamChargeType.name,teamChargeType.team_id) || await this.findOneByName(teamChargeType.name,0);
         if (nameFind) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';
+            return responseBody;
+        }
+
+        // 校验数量信息
+        const readyFind =  await this.findManyByTeamId(teamChargeType.team_id);
+        if (readyFind && readyFind.length >= 20) {
+            responseBody.code = HttpStatus.CONFLICT;
+            responseBody.message = '最多添加20个分类';
             return responseBody;
         }
 
@@ -96,11 +104,11 @@ export class TeamChargeTypeService {
         }
         teamChargeType.status = 0;
         // 同步删除所有记录
-        const teamCharges = await this.teamChargeService.findManyByTeamId(teamChargeType.team_id);
+        const teamCharges = await this.teamChargeService.findManyByChargeType(teamChargeType.realname, teamChargeType.team_id);
         await Promise.all(
             teamCharges.map(async (item)=>{
                 item.status = 0;
-                return await this.teamChargeService.updateTeamCharge(item.id,item.charge_num,item.remark);
+                return await this.teamChargeService.updateTeamCharge(item.id,item.charge_num,item.remark, item.status);
             })
         )
         // 更新数据时，删除 id，以避免请求体内传入 id
@@ -130,7 +138,7 @@ export class TeamChargeTypeService {
             return responseBody;
         }
         // 校验 name 信息
-        const nameFind = await this.findOneByName(teamChargeType.name,teamChargeType.team_id)
+        const nameFind = await this.findOneByName(name,teamChargeType.team_id) || await this.findOneByName(name,0);
         if (nameFind) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';

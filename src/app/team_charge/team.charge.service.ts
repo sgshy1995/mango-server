@@ -92,8 +92,9 @@ export class TeamChargeService {
      * @param id ID
      * @param charge_num charge_num 费用金额
      * @param remark remark 备注
+     * @param status status 状态
      */
-    async updateTeamCharge(id: number, charge_num: number, remark: string): Promise<ResponseResult> {
+    async updateTeamCharge(id: number, charge_num: number, remark: string, status?: number): Promise<ResponseResult> {
         let responseBody = {code: HttpStatus.OK, message: '更新成功'};
         const teamCharge = await this.findOneById(id);
         if (!teamCharge) {
@@ -110,6 +111,7 @@ export class TeamChargeService {
         teamCharge.id !== null && teamCharge.id !== undefined && delete teamCharge.id;
         teamCharge.charge_num = charge_num;
         teamCharge.remark = remark;
+        (status !== undefined && status !== null) ? teamCharge.status = status : null;
 
         await this.teamChargeRepo.update(id, teamCharge);
         return responseBody;
@@ -248,6 +250,16 @@ export class TeamChargeService {
      */
     public async findManyByTeamId(team_id: number, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
         return await this.teamChargeRepo.find({where: {team_id, status: 1}, select});
+    }
+
+    /**
+     * 根据 charge_type 查询多个信息，如果不存在则抛出404异常
+     * @param charge_type charge_type
+     * @param team_id team_id
+     @param select select conditions
+     */
+    public async findManyByChargeType(charge_type: string, team_id: number, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
+        return await this.teamChargeRepo.find({where: {charge_type, team_id, status: 1}, select});
     }
 
     /**

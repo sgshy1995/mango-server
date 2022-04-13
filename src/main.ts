@@ -12,8 +12,8 @@ import * as express from 'express';
 async function bootstrap() {
   const server = express();
   const httpsOptions = {
-    key: fs.readFileSync('/var/certs/7597188_eden-life.net.cn.key'),
-    cert: fs.readFileSync('/var/certs/7597188_eden-life.net.cn.pem')
+    key: fs.readFileSync(path.join(__dirname,'../cert/7597188_eden-life.net.cn.key')),
+    cert: fs.readFileSync(path.join(__dirname,'../cert/7597188_eden-life.net.cn.pem'))
   }
   const app = await NestFactory.create<NestExpressApplication>(AppModule,new ExpressAdapter(server));
   app.use('/public', serveStatic(path.join(__dirname, '../public'), {

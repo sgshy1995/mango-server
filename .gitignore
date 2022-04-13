@@ -39,3 +39,6 @@ lerna-debug.log*
 
 # statistic dir
 public/
+
+# cert dir
+cert/
