@@ -25,9 +25,10 @@ export class AuthService {
         const redis = await RedisInstance.initRedis('auth.capture', 0);
         const captcha = svgCaptcha.create({
             size: 4,
-            ignoreChars: '0o1iIl',
+            ignoreChars: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
             color: false,
-            fontSize: 60
+            fontSize: 60,
+            noise: 2
         });
         await redis.setex(device_id, 300, captcha.text);
         return `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`;
