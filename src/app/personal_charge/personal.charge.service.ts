@@ -26,7 +26,7 @@ export class PersonalChargeService {
         let responseBody = {code: HttpStatus.OK, message: '创建成功'};
 
         // 校验输入信息
-        if (!personalCharge.charge_num || !personalCharge.charge_type || !personalCharge.created_by || typeof personalCharge.charge_num !== 'number') {
+        if (!personalCharge.charge_num || !personalCharge.charge_type || !personalCharge.created_by || typeof personalCharge.charge_num !== 'number' || !personalCharge.charge_time) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
             return responseBody;
@@ -45,7 +45,7 @@ export class PersonalChargeService {
         // status
         personalCharge.status = 1;
         // charge_time
-        personalCharge.charge_time = moment(new Date(), 'YYYY-MM-DD').format('YYYY-MM-DD') + ' 00:00:00';
+        personalCharge.charge_time = moment(personalCharge.charge_time, 'YYYY-MM-DD').format('YYYY-MM-DD') + ' 00:00:00';
 
         await this.personalChargeRepo.save(personalCharge);
 

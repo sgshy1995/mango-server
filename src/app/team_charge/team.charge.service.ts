@@ -30,7 +30,7 @@ export class TeamChargeService {
         let responseBody = {code: HttpStatus.OK, message: '创建成功'};
 
         // 校验输入信息
-        if (!teamCharge.charge_num || !teamCharge.charge_type || !teamCharge.created_by || !teamCharge.team_id || typeof teamCharge.charge_num !== 'number') {
+        if (!teamCharge.charge_num || !teamCharge.charge_type || !teamCharge.created_by || !teamCharge.team_id || typeof teamCharge.charge_num !== 'number' || !teamCharge.charge_time) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
             return responseBody;
@@ -57,7 +57,7 @@ export class TeamChargeService {
         // status
         teamCharge.status = 1;
         // charge_time
-        teamCharge.charge_time = moment(new Date(), 'YYYY-MM-DD').format('YYYY-MM-DD') + ' 00:00:00';
+        teamCharge.charge_time = moment(teamCharge.charge_time, 'YYYY-MM-DD').format('YYYY-MM-DD') + ' 00:00:00';
 
         await this.teamChargeRepo.save(teamCharge);
 
