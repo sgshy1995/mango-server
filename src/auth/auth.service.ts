@@ -102,7 +102,7 @@ export class AuthService {
             // 实例化 redis
             const redis = await RedisInstance.initRedis('auth.certificate', 0);
             // 将用户信息和 token 存入 redis，并设置失效时间，语法：[key, seconds, value]
-            await redis.setex(`${user.id}-${user.username}`, 3600, `${token}`);
+            await redis.setex(`${user.id}-${user.username}`, 604800, `${token}`);
             return {
                 code: HttpStatus.OK,
                 data: {
