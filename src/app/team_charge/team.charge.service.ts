@@ -175,7 +175,7 @@ export class TeamChargeService {
      */
 
     async findManyTeamCharges(findOptions: TeamCharge & { charge_time_range: string[] }): Promise<ResponseResult> {
-        console.log('findOptions',findOptions)
+        console.log('findOptions', findOptions);
         let responseBody = {code: HttpStatus.OK, message: '查询成功'};
         const selectOptions = {
             id: true,
@@ -192,27 +192,27 @@ export class TeamChargeService {
             responseBody.message = '参数错误';
         } else {
             const teamCharges = await this.findMany(findOptions, {charge_time_range: findOptions.charge_time_range});
-            const summaryResult: {charge_type: string, money: number, balance_type: number }[] = []
-            teamCharges.map(item=>{
-                if (!summaryResult.find(itemIn=>itemIn.charge_type === item.charge_type)){
+            const summaryResult: { charge_type: string, money: number, balance_type: number }[] = [];
+            teamCharges.map(item => {
+                if (!summaryResult.find(itemIn => itemIn.charge_type === item.charge_type)) {
                     const itemPush = {
                         charge_type: item.charge_type,
                         balance_type: item.balance_type,
                         money: 0
-                    }
+                    };
 
-                    itemPush.money += item.charge_num
-                    summaryResult.push(itemPush)
-                }else{
-                    const itemFind = summaryResult.find(itemIn=>itemIn.charge_type === item.charge_type)
-                    itemFind.money += item.charge_num
+                    itemPush.money += item.charge_num;
+                    summaryResult.push(itemPush);
+                } else {
+                    const itemFind = summaryResult.find(itemIn => itemIn.charge_type === item.charge_type);
+                    itemFind.money += item.charge_num;
                 }
-            })
+            });
 
             const total = {
-                income: summaryResult.filter(item=>item.balance_type).length ? summaryResult.filter(item=>item.balance_type).map(item=>item.money).reduce((m,n)=>m+n) : 0,
-                spend: summaryResult.filter(item=>!item.balance_type).length ? summaryResult.filter(item=>!item.balance_type).map(item=>item.money).reduce((m,n)=>m+n) : 0
-            }
+                income: summaryResult.filter(item => item.balance_type).length ? summaryResult.filter(item => item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0,
+                spend: summaryResult.filter(item => !item.balance_type).length ? summaryResult.filter(item => !item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0
+            };
             return {
                 code: HttpStatus.OK,
                 message: '查询成功',
@@ -367,7 +367,7 @@ export class TeamChargeService {
                     return new Promise(async (resolve, reject) => {
                         const timeStart = moment(`${year}-${indexIn + 1}-1 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
                         const timeEnd = moment(`${year}-${indexIn + 1}-${num} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
-                        const showTime = indexIn.toString();
+                        const showTime = (indexIn + 1).toString();
                         // @ts-ignore
                         findResult[showTime] = await this.findMany({
                             team_id

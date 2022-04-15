@@ -344,7 +344,7 @@ export class PersonalChargeService {
                     return new Promise(async (resolve, reject) => {
                         const timeStart = moment(`${year}-${indexIn + 1}-1 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
                         const timeEnd = moment(`${year}-${indexIn + 1}-${num} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
-                        const showTime = indexIn.toString();
+                        const showTime = (indexIn + 1).toString();
                         // @ts-ignore
                         findResult[showTime] = await this.findMany({
                             created_by
