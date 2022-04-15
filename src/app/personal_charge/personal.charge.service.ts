@@ -139,7 +139,7 @@ export class PersonalChargeService {
      */
 
     async findManyPersonalCharges(findOptions: PersonalCharge & { charge_time_range: string[] }): Promise<ResponseResult> {
-        console.log('findOptions',findOptions)
+        console.log('findOptions', findOptions);
         let responseBody = {code: HttpStatus.OK, message: '查询成功'};
         const selectOptions = {
             id: true,
@@ -155,28 +155,28 @@ export class PersonalChargeService {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
         } else {
-            const personalCharges = await this.findMany(findOptions, selectOptions);
-            const summaryResult: {charge_type: string, money: number, balance_type: number }[] = []
-            personalCharges.map(item=>{
-                if (!summaryResult.find(itemIn=>itemIn.charge_type === item.charge_type)){
+            const personalCharges = await this.findMany(findOptions, {charge_time_range: findOptions.charge_time_range}, selectOptions);
+            const summaryResult: { charge_type: string, money: number, balance_type: number }[] = [];
+            personalCharges.map(item => {
+                if (!summaryResult.find(itemIn => itemIn.charge_type === item.charge_type)) {
                     const itemPush = {
                         charge_type: item.charge_type,
                         balance_type: item.balance_type,
                         money: 0
-                    }
+                    };
 
-                    itemPush.money += item.charge_num
-                    summaryResult.push(itemPush)
-                }else{
-                    const itemFind = summaryResult.find(itemIn=>itemIn.charge_type === item.charge_type)
-                    itemFind.money += item.charge_num
+                    itemPush.money += item.charge_num;
+                    summaryResult.push(itemPush);
+                } else {
+                    const itemFind = summaryResult.find(itemIn => itemIn.charge_type === item.charge_type);
+                    itemFind.money += item.charge_num;
                 }
-            })
+            });
 
             const total = {
-                income: summaryResult.filter(item=>item.balance_type).length ? summaryResult.filter(item=>item.balance_type).map(item=>item.money).reduce((m,n)=>m+n) : 0,
-                spend: summaryResult.filter(item=>!item.balance_type).length ? summaryResult.filter(item=>!item.balance_type).map(item=>item.money).reduce((m,n)=>m+n) : 0
-            }
+                income: summaryResult.filter(item => item.balance_type).length ? summaryResult.filter(item => item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0,
+                spend: summaryResult.filter(item => !item.balance_type).length ? summaryResult.filter(item => !item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0
+            };
             return {
                 code: HttpStatus.OK,
                 message: '查询成功',
@@ -192,6 +192,28 @@ export class PersonalChargeService {
     }
 
     /**
+     * 多路查询
+     * */
+    async findManyChargesByTime(created_by: number, time_type: 'week' | 'month' | 'year', year: number, index: number): Promise<ResponseResult> {
+        const selectOptions = {
+            id: true,
+            created_by: true,
+            charge_type: true,
+            balance_type: true,
+            charge_time: true,
+            charge_num: true,
+            remark: true,
+            created_at: true
+        };
+        const personalCharges = await this.findManyByTime(created_by, time_type, year, index, selectOptions);
+        return {
+            code: HttpStatus.OK,
+            message: '查询成功',
+            data: personalCharges
+        };
+    }
+
+    /**
      * 根据ID查询单个信息，如果不存在则抛出404异常
      * @param id ID
      * @param select select conditions
@@ -203,15 +225,16 @@ export class PersonalChargeService {
     /**
      * 根据参数查询多个信息，如果不存在则抛出404异常
      * @param findOptions findOptions
+     * @param customFindOptions customFindOptions
      @param select select conditions
      */
-    public async findMany(findOptions: PersonalCharge & { charge_time_range: string[] }, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
+    public async findMany(findOptions: PersonalCharge, customFindOptions?: { charge_time_range: string[] }, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
         return await this.personalChargeRepo.find({
             where: {
                 status: 1,
                 ...findOptions,
-                charge_time: (findOptions.charge_time_range && findOptions.charge_time_range.length && findOptions.charge_time_range.length === 2) ?
-                    Between(findOptions.charge_time_range[0], findOptions.charge_time_range[1]) :
+                charge_time: (customFindOptions && customFindOptions.charge_time_range && customFindOptions.charge_time_range.length && customFindOptions.charge_time_range.length === 2) ?
+                    Between(customFindOptions.charge_time_range[0], customFindOptions.charge_time_range[1]) :
                     findOptions.charge_time ?
                         findOptions.charge_time : undefined
             }, order: {
@@ -244,10 +267,11 @@ export class PersonalChargeService {
     /**
      * 根据 charge_time 查询多个信息，如果不存在则抛出404异常
      * @param charge_time charge_time
+     * @param created_by created_by
      @param select select conditions
      */
-    public async findManyByChargeTime(charge_time: string, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
-        return await this.personalChargeRepo.find({where: {charge_time, status: 1}, select});
+    public async findManyByChargeTime(charge_time: string, created_by: number, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
+        return await this.personalChargeRepo.find({where: {charge_time, created_by, status: 1}, select});
     }
 
     /**
@@ -263,5 +287,108 @@ export class PersonalChargeService {
             },
             select
         });
+    }
+
+    /**
+     * 根据周/月/年 查询数据
+     * @param created_by number 创建人
+     * @param time_type 'week' | 'month' | 'year' 查询时间类型
+     * @param year number 查询年份
+     * @param index number 第几（只在周或月条件下生效）
+     * @param select select conditions
+     * */
+    public async findManyByTime(created_by: number, time_type: 'week' | 'month' | 'year', year: number, index: number, select?: FindOptionsSelect<PersonalCharge>) {
+        type ResultItem = {
+            times: string[]
+            spend: number[]
+            income: number[]
+        }
+
+        // 生成指定长度的全部元素都为0的数组
+        function generateZeroArray(length: number): number[] {
+            const arr = [];
+            for (let i = 0; i <= length; i++) {
+                arr.push(0);
+            }
+            return arr;
+        }
+
+        const findResult: Record<string, PersonalCharge[]> = {};
+
+        switch (time_type) {
+            case 'week': {
+                break;
+            }
+
+            case 'month': {
+                const days = [];
+                for (let i = 0; i <= 31; i++) {
+                    days.push(i);
+                }
+                await Promise.all(days.map(i => {
+                    return new Promise(async (resolve, reject) => {
+                        const findTime = moment(`${year}-${index}-${i} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
+                        const showTime = i.toString();
+                        if (findTime && findTime.indexOf('Invalid') <= -1) {
+                            findResult[showTime] = await this.findManyByChargeTime(findTime, created_by, select);
+                        }
+                        resolve('ready');
+                    });
+                }));
+                break;
+            }
+
+            case 'year': {
+                const daysList = [31, year / 4 ? 28 : 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                await Promise.all(daysList.map((num, indexIn) => {
+                    return new Promise(async (resolve, reject) => {
+                        const timeStart = moment(`${year}-${indexIn + 1}-1 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
+                        const timeEnd = moment(`${year}-${indexIn + 1}-${num} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
+                        const showTime = indexIn.toString();
+                        // @ts-ignore
+                        findResult[showTime] = await this.findMany({
+                            created_by
+                        }, {charge_time_range: [timeStart, timeEnd]}, select);
+                        resolve('ready');
+                    });
+                }));
+                break;
+            }
+        }
+
+        const sortKeys = Object.keys(findResult).sort((a, b) => {
+            return time_type === 'week' ? new Date(a).getTime() - new Date(b).getTime() : new Date(a).getMonth() - new Date(b).getMonth();
+        });
+        const showResults: { total: ResultItem, items: Record<string, ResultItem> } = {
+            total: {
+                times: sortKeys,
+                spend: generateZeroArray(sortKeys.length),
+                income: generateZeroArray(sortKeys.length)
+            },
+            items: {}
+        };
+        sortKeys.forEach((date, indexIn) => {
+            // 遍历每一个时间总记录
+            findResult[date].forEach(item => {
+                // 遍历每一个时间总记录中的一条记录
+                // total
+                item.balance_type ? showResults.total.income[indexIn] += item.charge_num : showResults.total.spend[indexIn] += item.charge_num;
+                // items 是否存在该类型的记录
+                if (showResults.items.hasOwnProperty(item.charge_type)) {
+                    if (showResults.items[item.charge_type].times[indexIn] === null || showResults.items[item.charge_type].times[indexIn] === undefined) showResults.items[item.charge_type].times[indexIn] = date;
+                    if (showResults.items[item.charge_type].income[indexIn] === null || showResults.items[item.charge_type].income[indexIn] === undefined) showResults.items[item.charge_type].income[indexIn] = 0;
+                    if (showResults.items[item.charge_type].spend[indexIn] === null || showResults.items[item.charge_type].spend[indexIn] === undefined) showResults.items[item.charge_type].spend[indexIn] = 0;
+                    item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
+                } else {
+                    showResults.items[item.charge_type] = {
+                        times: sortKeys,
+                        spend: generateZeroArray(sortKeys.length),
+                        income: generateZeroArray(sortKeys.length)
+                    };
+                    item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
+                }
+            });
+        });
+        return showResults;
     }
 }

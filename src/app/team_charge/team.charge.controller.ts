@@ -66,4 +66,14 @@ export class TeamChargeController {
         response.status(res.code);
         return res;
     }
+
+    @UseGuards(new TokenGuard()) // 使用 token redis 验证
+    @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
+    @Get('time/find')
+    async findManyPersonalChargesByCustomTime(@Query() timeOptions: { team_id: string, time_type: 'week' | 'month' | 'year', year: string, index: string }, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
+        const {team_id, time_type, year, index} = timeOptions;
+        const res = await this.teamChargeService.findManyChargesByTime(Number(team_id), time_type, Number(year), Number(index));
+        response.status(res.code);
+        return res;
+    }
 }
