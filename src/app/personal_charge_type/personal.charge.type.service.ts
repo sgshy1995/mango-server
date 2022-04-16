@@ -224,7 +224,7 @@ export class PersonalChargeTypeService {
     public async findManyByCreatedBy(created_by: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType[] | undefined> {
         return await this.personalChargeTypeRepo.find({
             where: {created_by, status: 1}, order: {
-                created_at: {
+                id: {
                     direction: 'asc'
                 }
             }, select
@@ -244,7 +244,7 @@ export class PersonalChargeTypeService {
                 created_by: findOptions.created_by ? Number(findOptions.created_by) : undefined,
                 status: 1
             }, order: {
-                created_at: {
+                id: {
                     direction: 'asc'
                 }
             }, select
@@ -256,7 +256,7 @@ export class PersonalChargeTypeService {
                 created_by: 0,
                 status: 1
             }, order: {
-                created_at: {
+                id: {
                     direction: 'asc'
                 }
             }, select

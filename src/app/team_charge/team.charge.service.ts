@@ -252,7 +252,7 @@ export class TeamChargeService {
                     findOptions.charge_time ?
                         findOptions.charge_time : undefined
             }, order: {
-                created_at: {
+                id: {
                     direction: 'asc'
                 }
             }, select
@@ -274,7 +274,7 @@ export class TeamChargeService {
      @param select select conditions
      */
     public async findManyByTeamId(team_id: number, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
-        return await this.teamChargeRepo.find({where: {team_id, status: 1}, select});
+        return await this.teamChargeRepo.find({where: {team_id, status: 1}, order: {id: 'asc'}, select});
     }
 
     /**
