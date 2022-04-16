@@ -20,7 +20,7 @@ export class TeamCharge {
     @Column('int')
     team_id: number;
 
-    @Column('timestamp')
+    @Column('varchar')
     charge_time: string;
 
     @Column('int')

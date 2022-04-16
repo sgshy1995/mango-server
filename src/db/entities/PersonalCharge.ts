@@ -17,7 +17,7 @@ export class PersonalCharge {
     @Column('int')
     created_by: number;
 
-    @Column('timestamp')
+    @Column('varchar')
     charge_time: string;
 
     @Column('int')

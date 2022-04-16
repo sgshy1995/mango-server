@@ -13,7 +13,7 @@ export class PathMiddleware implements NestMiddleware {
                 fs.mkdirSync(dir_path,{recursive:true});
             }
         }
-        createDirIfNotExist(path.join(process.env.UPLOAD_PATH,`/users/${moment(new Date(),'YYYY-MM-DD').format('YYYY-MM-DD')}`))
+        createDirIfNotExist(path.join(process.env.UPLOAD_PATH,`/users/${moment(new Date(),'YYYY-MM-DD').utcOffset(8).format('YYYY-MM-DD')}`))
         next();
     }
 }

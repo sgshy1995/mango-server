@@ -47,7 +47,8 @@ import {UserController} from './app/user/user.controller';
             ...databaseConfig(),
             entities: [],
             synchronize: false,
-            autoLoadEntities: true
+            autoLoadEntities: true,
+            timezone: 'Z'
         }),
         // modules
         UserModule,
