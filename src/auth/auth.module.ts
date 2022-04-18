@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LocalStrategy } from './local.strategy';
+//import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import {  UserModule  } from "../app/user/user.module";
 import { PassportModule } from '@nestjs/passport';
@@ -29,7 +29,9 @@ const isProd = process.env.NODE_ENV === 'production';
     UserModule
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy],
+  providers: [AuthService,
+    //LocalStrategy,
+    JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
