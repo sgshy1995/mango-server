@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
-//import { LocalStrategy } from './local.strategy';
+import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import {  UserModule  } from "../app/user/user.module";
 import { PassportModule } from '@nestjs/passport';
@@ -24,14 +24,12 @@ const isProd = process.env.NODE_ENV === 'production';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: jwtConfig().secret,
-      signOptions: { expiresIn: '1h' }, // token 过期时效
+      signOptions: { expiresIn: '7d' }, // token 过期时效
     }),
     UserModule
   ],
   controllers: [AuthController],
-  providers: [AuthService,
-    //LocalStrategy,
-    JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}
