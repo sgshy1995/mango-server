@@ -1,10 +1,10 @@
 import {HttpStatus, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
-import {FindOptionsSelect, getRepository, Repository} from 'typeorm';
+import {FindOptionsSelect, FindOptionsWhere, getRepository, Repository} from 'typeorm';
 import {v4 as uuidV4} from 'uuid';
 import {User} from '../../db/entities/User';
 import {ResponseResult} from '../../types/result.interface';
-import {isNickname, isPassword, isUsername} from '../../utils/validate';
+import {isEmail, isMobile, isNickname, isPassword, isUsername} from '../../utils/validate';
 import {encryptPassword, makeSalt} from '../../utils/cryptogram';
 
 @Injectable()
@@ -23,7 +23,7 @@ export class UserService {
         /**
          * 创建新的实体实例，并将此对象的所有实体属性复制到新实体中。 请注意，它仅复制实体模型中存在的属性。
          */
-        let responseBody = {code: 200, message: '创建成功'};
+        let responseBody = {code: HttpStatus.OK, message: '创建成功'};
         // 校验用户信息
         if (!user.username || !user.nickname || !user.password) {
             responseBody.code = HttpStatus.BAD_REQUEST;
@@ -107,12 +107,81 @@ export class UserService {
      * @param id ID
      * @param user User 实体对象
      */
-    async updateUser(id: number, user: User): Promise<void> {
-        await this.findOneById(id);
+    async updateUser(id: number, user: User): Promise<ResponseResult> {
+        let responseBody = {code: HttpStatus.OK, message: '更新成功'};
+        if (!id){
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '用户ID不能为空';
+            return responseBody;
+        }
+        let userFind = await this.findOneById(id);
+        if (!userFind){
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '用户不存在';
+            return responseBody;
+        }
         // 更新数据时，删除 id，以避免请求体内传入 id
         user.id !== null && user.id !== undefined && delete user.id;
-        await this.userRepo.update(id, user);
-        console.log('用户已更新', user);
+        // 校验 nickname
+        if (user.hasOwnProperty('nickname')){
+            if (!user.nickname){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '昵称不能为空';
+                return responseBody;
+            }
+            if (!isNickname(user.nickname)){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内';
+                return responseBody;
+            }
+            const userNicknameExist =  await this.findOneByNickname(user.nickname);
+            if (userNicknameExist){
+                responseBody.code = HttpStatus.CONFLICT;
+                responseBody.message = '昵称已存在';
+                return responseBody;
+            }
+        }
+        // 校验 email
+        if (user.hasOwnProperty('email')){
+            if (!user.email){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '邮箱不能为空';
+                return responseBody;
+            }
+            if (!isEmail(user.email)){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '请输入正确格式的邮箱';
+                return responseBody;
+            }
+            const userEmailExist =  await this.findOneByAny({email: user.email});
+            if (userEmailExist){
+                responseBody.code = HttpStatus.CONFLICT;
+                responseBody.message = '邮箱已被注册';
+                return responseBody;
+            }
+        }
+        // 校验 phone
+        if (user.hasOwnProperty('phone')){
+            if (!user.phone){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '手机号不能为空';
+                return responseBody;
+            }
+            if (!isMobile(user.phone)){
+                responseBody.code = HttpStatus.BAD_REQUEST;
+                responseBody.message = '请输入正确格式的手机号';
+                return responseBody;
+            }
+            const userPhoneExist =  await this.findOneByAny({phone: user.phone});
+            if (user.phone && userPhoneExist){
+                responseBody.code = HttpStatus.CONFLICT;
+                responseBody.message = '手机号已被注册';
+                return responseBody;
+            }
+        }
+        userFind = Object.assign(userFind, user)
+        await this.userRepo.update(id, userFind);
+        return responseBody;
     }
 
     /**
@@ -130,7 +199,9 @@ export class UserService {
             email: true,
             id: true,
             team_id: true,
-            team_name: true
+            team_name: true,
+            gender: true,
+            birthday: true
         });
         return userFind ?
             {
@@ -158,7 +229,9 @@ export class UserService {
             email: true,
             id: true,
             team_id: true,
-            team_name: true
+            team_name: true,
+            gender: true,
+            birthday: true
         });
         return userFind ?
             {
@@ -210,5 +283,14 @@ export class UserService {
      */
     public async findOneByNickname(nickname: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
         return await this.userRepo.findOne({where: {nickname}, select});
+    }
+
+    /**
+     * 根据 custom 查询单个信息，如果不存在则抛出404异常
+     * @param custom any
+     @param select select conditions
+     */
+    public async findOneByAny(custom: FindOptionsWhere<User>, select?: FindOptionsSelect<User>): Promise<User | undefined> {
+        return await this.userRepo.findOne({where: custom, select});
     }
 }

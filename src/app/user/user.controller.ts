@@ -43,7 +43,8 @@ export class UserController {
     async uploadFile(@UploadedFile() file,@Res({ passthrough: true }) response: Response,@Req() request: RequestParams): Promise<Response | void | Record<string, any>> {
         console.log(file);
         console.log(request.user);
-        await this.UserService.updateUser(request.user.id, {...request.user,avatar: file.path.split(path.sep).join('/')});
+        // @ts-ignore
+        await this.UserService.updateUser(request.user.id, {avatar: file.path.split(path.sep).join('/')});
         const res = {
             code: HttpStatus.OK,
             message: '上传成功'
@@ -122,8 +123,9 @@ export class UserController {
     @UseGuards(new TokenGuard()) // 使用 token redis 验证
     @UseGuards(AuthGuard('jwt')) // 使用 'JWT' 进行验证
     @Put(':id')
-    async updateUser(@Param('id') id: number, @Body() User: User): Promise<ResponseResult> {
-        await this.UserService.updateUser(id, User);
-        return { code: 200, message: '更新成功' };
+    async updateUser(@Param('id') id: number, @Body() User: User, @Res({ passthrough: true }) response: Response): Promise<ResponseResult> {
+        const res = await this.UserService.updateUser(id, User);
+        response.status(res.code)
+        return res
     }
 }
