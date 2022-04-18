@@ -131,7 +131,7 @@ export class PersonalChargeTypeService {
         }
         // 校验 name 信息
         const nameFind = await this.findOneByName(name, personalChargeType.created_by) || await this.findOneByName(name, 0);
-        if (nameFind) {
+        if (nameFind && nameFind.id !== personalChargeType.id) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';
             return responseBody;
@@ -212,7 +212,7 @@ export class PersonalChargeTypeService {
      * @param created_by created_by
      * @param select select conditions
      */
-    public async findOneByName(name: string, created_by: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType | undefined> {
+    public async findOneByName(name: string, created_by?: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType | undefined> {
         return await this.personalChargeTypeRepo.findOne({where: {name, created_by, status: 1}, select});
     }
 

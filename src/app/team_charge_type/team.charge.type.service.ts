@@ -139,7 +139,7 @@ export class TeamChargeTypeService {
         }
         // 校验 name 信息
         const nameFind = await this.findOneByName(name,teamChargeType.team_id) || await this.findOneByName(name,0);
-        if (nameFind) {
+        if (nameFind && nameFind.team_id !== teamChargeType.team_id) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '分类已存在';
             return responseBody;
