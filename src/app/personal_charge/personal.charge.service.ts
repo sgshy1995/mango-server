@@ -5,6 +5,7 @@ import {PersonalCharge} from '../../db/entities/PersonalCharge';
 import {ResponseResult} from '../../types/result.interface';
 import {UserService} from '../user/user.service';
 import moment = require('moment');
+import {getWeeks} from '../../utils/getWeeks';
 
 @Injectable()
 export class PersonalChargeService {
@@ -317,6 +318,18 @@ export class PersonalChargeService {
 
         switch (time_type) {
             case 'week': {
+                const weekInfo = getWeeks([year])[year.toString()][index.toString()];
+                const weekShowInfo = ['1', '2', '3', '4', '5', '6', '7'];
+                await Promise.all(weekInfo.days.map((day, indexIn) => {
+                    return new Promise(async (resolve, reject) => {
+                        const findTime = moment(`${day} 00:00:00`, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss');
+                        const showTime = weekShowInfo[indexIn];
+                        if (findTime && findTime.indexOf('Invalid') <= -1) {
+                            findResult[showTime] = await this.findManyByChargeTime(findTime, created_by, select);
+                        }
+                        resolve('ready');
+                    });
+                }));
                 break;
             }
 
@@ -361,7 +374,7 @@ export class PersonalChargeService {
         });
         const showResults: { total: ResultItem, items: Record<string, ResultItem> } = {
             total: {
-                times: sortKeys,
+                times: time_type === 'week' ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] : sortKeys,
                 spend: generateZeroArray(sortKeys.length),
                 income: generateZeroArray(sortKeys.length)
             },
@@ -381,7 +394,7 @@ export class PersonalChargeService {
                     item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
                 } else {
                     showResults.items[item.charge_type] = {
-                        times: sortKeys,
+                        times: time_type === 'week' ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] : sortKeys,
                         spend: generateZeroArray(sortKeys.length),
                         income: generateZeroArray(sortKeys.length)
                     };
