@@ -175,8 +175,8 @@ export class PersonalChargeService {
             });
 
             const total = {
-                income: summaryResult.filter(item => item.balance_type).length ? summaryResult.filter(item => item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0,
-                spend: summaryResult.filter(item => !item.balance_type).length ? summaryResult.filter(item => !item.balance_type).map(item => item.money).reduce((m, n) => m + n) : 0
+                income: summaryResult.filter(item => item.balance_type).length ? Math.round(summaryResult.filter(item => item.balance_type).map(item => item.money).reduce((m, n) => m + n) * 100) / 100 : 0,
+                spend: summaryResult.filter(item => !item.balance_type).length ? Math.round(summaryResult.filter(item => !item.balance_type).map(item => item.money).reduce((m, n) => m + n) * 100) / 100 : 0
             };
             return {
                 code: HttpStatus.OK,
@@ -386,6 +386,8 @@ export class PersonalChargeService {
                 // 遍历每一个时间总记录中的一条记录
                 // total
                 item.balance_type ? showResults.total.income[indexIn] += item.charge_num : showResults.total.spend[indexIn] += item.charge_num;
+                showResults.total.income[indexIn] = Math.round(showResults.total.income[indexIn] * 100) / 100
+                showResults.total.spend[indexIn] = Math.round(showResults.total.spend[indexIn] * 100) / 100
                 // items 是否存在该类型的记录
                 if (showResults.items.hasOwnProperty(item.charge_type)) {
                     if (showResults.items[item.charge_type].times[indexIn] === null || showResults.items[item.charge_type].times[indexIn] === undefined) showResults.items[item.charge_type].times[indexIn] = date;
@@ -400,6 +402,8 @@ export class PersonalChargeService {
                     };
                     item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
                 }
+                showResults.items[item.charge_type].income[indexIn] = Math.round(showResults.items[item.charge_type].income[indexIn] * 100) / 100
+                showResults.items[item.charge_type].spend[indexIn] = Math.round(showResults.items[item.charge_type].spend[indexIn] * 100) / 100
             });
         });
         return showResults;
