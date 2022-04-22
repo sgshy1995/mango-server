@@ -32,6 +32,7 @@ import {TeamChargeTypeModule} from './app/team_charge_type/team.charge.type.modu
 import {StatusFilter} from './common/errors.filter';
 import {AuthModule} from './auth/auth.module';
 import {UserController} from './app/user/user.controller';
+import {InfoModule} from './app/info/info.module';
 
 @Module({
     imports: [
@@ -57,6 +58,7 @@ import {UserController} from './app/user/user.controller';
         PersonalChargeTypeModule,
         TeamChargeModule,
         TeamChargeTypeModule,
+        InfoModule,
         AuthModule
     ],
     controllers: [AppController, UserController],
@@ -76,6 +78,10 @@ export class AppModule {
     configure(consumer: MiddlewareConsumer) {
         consumer
             .apply(PathMiddleware)
-            .forRoutes({path: 'user/upload', method: RequestMethod.POST});
+            .forRoutes(
+                {path: 'user/upload', method: RequestMethod.POST},
+                {path: 'info/upload/background', method: RequestMethod.POST},
+                {path: 'info/upload/avatar', method: RequestMethod.POST}
+            );
     }
 }

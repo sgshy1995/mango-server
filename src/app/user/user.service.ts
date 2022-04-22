@@ -6,11 +6,13 @@ import {User} from '../../db/entities/User';
 import {ResponseResult} from '../../types/result.interface';
 import {isEmail, isMobile, isNickname, isPassword, isUsername} from '../../utils/validate';
 import {encryptPassword, makeSalt} from '../../utils/cryptogram';
+import {InfoService} from '../info/info.service';
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User) private readonly userRepo: Repository<User>,  // 使用泛型注入对应类型的存储库实例
+        private readonly infoService: InfoService
     ) {
     }
 
@@ -81,6 +83,11 @@ export class UserService {
         responseBody.message = '注册成功';
 
         await this.userRepo.save(user);
+
+        // @ts-ignore
+        await this.infoService.createInfo({
+            user_id: user.id
+        })
 
         return responseBody;
 
