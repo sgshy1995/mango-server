@@ -43,8 +43,10 @@ export const getWeeks = (years: number[]): WeekMap => {
                 moment(new Date(new Date(weeksMap[year.toString()][i.toString()].from).setDate(new Date(weeksMap[year.toString()][i.toString()].from).getDate() + 3)), 'YYYY-MM-DD').format('YYYY-MM-DD'),
                 moment(new Date(new Date(weeksMap[year.toString()][i.toString()].from).setDate(new Date(weeksMap[year.toString()][i.toString()].from).getDate() + 4)), 'YYYY-MM-DD').format('YYYY-MM-DD'),
                 moment(new Date(new Date(weeksMap[year.toString()][i.toString()].from).setDate(new Date(weeksMap[year.toString()][i.toString()].from).getDate() + 5)), 'YYYY-MM-DD').format('YYYY-MM-DD'),
-                weeksMap[year.toString()][i.toString()].to
+                moment(new Date(new Date(weeksMap[year.toString()][i.toString()].from).setDate(new Date(weeksMap[year.toString()][i.toString()].from).getDate() + 6)), 'YYYY-MM-DD').format('YYYY-MM-DD'),
             ];
+            // 更正 to date
+            weeksMap[year.toString()][i.toString()].to = moment(new Date(new Date(weeksMap[year.toString()][i.toString()].from).setDate(new Date(weeksMap[year.toString()][i.toString()].from).getDate() + 6)), 'YYYY-MM-DD').format('YYYY-MM-DD')
             // i++
             i++;
         }
