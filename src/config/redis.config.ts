@@ -8,7 +8,7 @@ const redisConfig = () => {
     return {
         host: REDIS_HOST,
         db: parseInt(REDIS_DB, 10) || 0,
-        port: parseInt(REDIS_PORT, 10) || 3306,
+        port: parseInt(REDIS_PORT, 10) || 6379,
         password: REDIS_PASSWORD
     };
 };
