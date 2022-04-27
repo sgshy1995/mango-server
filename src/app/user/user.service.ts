@@ -21,17 +21,42 @@ export class UserService {
      *
      * @param user User 实体对象
      */
-    async createUser(user: User): Promise<ResponseResult> {
+    async createUser(user: User & {private_yard?: string}): Promise<ResponseResult> {
         /**
          * 创建新的实体实例，并将此对象的所有实体属性复制到新实体中。 请注意，它仅复制实体模型中存在的属性。
          */
         let responseBody = {code: HttpStatus.OK, message: '创建成功'};
         // 校验用户信息
-        if (!user.username || !user.nickname || !user.password) {
+        if (!user.username || !user.nickname || !user.password || !user.private_yard) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
             return responseBody;
         }
+
+        // 格式校验
+        if (!isUsername(user.username)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '用户名只能为数字、大小写英文和下划线，且在18位以内';
+            return responseBody;
+        }
+        if (!isNickname(user.nickname)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内';
+            return responseBody;
+        }
+        if (!isPassword(user.password)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内';
+            return responseBody;
+        }
+
+        // 内测码验证
+        if (user.private_yard !== process.env.PRIVATE_YARD){
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '内测码错误';
+            return responseBody;
+        }
+
         const userInfoExistUsername = await this.userRepo.findOne({
             where: {
                 username: user.username
@@ -50,21 +75,6 @@ export class UserService {
         if (userInfoExistNickname) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '昵称已存在';
-            return responseBody;
-        }
-        if (!isUsername(user.username)) {
-            responseBody.code = HttpStatus.BAD_REQUEST;
-            responseBody.message = '用户名只能为数字、大小写英文和下划线，且在18位以内';
-            return responseBody;
-        }
-        if (!isNickname(user.nickname)) {
-            responseBody.code = HttpStatus.BAD_REQUEST;
-            responseBody.message = '昵称只能为中文、数字、大小写英文和下划线，且在12位以内';
-            return responseBody;
-        }
-        if (!isPassword(user.password)) {
-            responseBody.code = HttpStatus.BAD_REQUEST;
-            responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内';
             return responseBody;
         }
         // 处理密码
