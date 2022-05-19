@@ -15,6 +15,14 @@ export function isNickname(s: string){
 }
 
 /**
+ * 备注
+ * @param s
+ * */
+export function isRemark(s: string){
+    return /^[\u4e00-\u9fa5A-Za-z0-9-_]*$/.test(s) && s.length<=20
+}
+
+/**
 * 密码
 * 密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少三项正则表达式
 * 20位

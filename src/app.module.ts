@@ -33,6 +33,7 @@ import {StatusFilter} from './common/errors.filter';
 import {AuthModule} from './auth/auth.module';
 import {UserController} from './app/user/user.controller';
 import {InfoModule} from './app/info/info.module';
+import {MemorialDayModule} from './app/memorial_day/memorial.day.module';
 
 @Module({
     imports: [
@@ -59,7 +60,8 @@ import {InfoModule} from './app/info/info.module';
         TeamChargeModule,
         TeamChargeTypeModule,
         InfoModule,
-        AuthModule
+        AuthModule,
+        MemorialDayModule
     ],
     controllers: [AppController, UserController],
     providers: [
