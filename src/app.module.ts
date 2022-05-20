@@ -34,6 +34,7 @@ import {AuthModule} from './auth/auth.module';
 import {UserController} from './app/user/user.controller';
 import {InfoModule} from './app/info/info.module';
 import {MemorialDayModule} from './app/memorial_day/memorial.day.module';
+import {BirthdayModule} from './app/birthday/birthday.module';
 
 @Module({
     imports: [
@@ -61,7 +62,8 @@ import {MemorialDayModule} from './app/memorial_day/memorial.day.module';
         TeamChargeTypeModule,
         InfoModule,
         AuthModule,
-        MemorialDayModule
+        MemorialDayModule,
+        BirthdayModule
     ],
     controllers: [AppController, UserController],
     providers: [
