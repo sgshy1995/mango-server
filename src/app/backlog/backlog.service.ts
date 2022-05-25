@@ -128,7 +128,7 @@ export class BacklogService {
                 data: backlogFind.map(item=>{
                     return {
                         ...item,
-                        memorial_day: moment(new Date(item.backlog_day), 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')
+                        backlog_day: moment.utc(item.backlog_day, 'YYYY-MM-DD HH:mm:ss').format('YYYY-MM-DD HH:mm:ss')
                     }
                 })
             } : {
