@@ -215,6 +215,31 @@ export class PersonalChargeService {
     }
 
     /**
+     * 近期查询
+     * */
+    async findManyChargesRecentByTime(created_by: number, time_start: string, time_end: string): Promise<ResponseResult> {
+        const selectOptions = {
+            id: true,
+            created_by: true,
+            charge_type: true,
+            balance_type: true,
+            charge_time: true,
+            charge_num: true,
+            remark: true,
+            created_at: true
+        };
+        // @ts-ignore
+        const personalCharges = await this.findMany({
+            created_by
+        }, {charge_time_range: [time_start, time_end]}, selectOptions);
+        return {
+            code: HttpStatus.OK,
+            message: '查询成功',
+            data: personalCharges
+        };
+    }
+
+    /**
      * 根据ID查询单个信息，如果不存在则抛出404异常
      * @param id ID
      * @param select select conditions
@@ -230,7 +255,7 @@ export class PersonalChargeService {
      @param select select conditions
      */
     public async findMany(findOptions: PersonalCharge, customFindOptions?: { charge_time_range: string[] }, select?: FindOptionsSelect<PersonalCharge>): Promise<PersonalCharge[] | undefined> {
-        return await this.personalChargeRepo.find({
+        const findResults = await this.personalChargeRepo.find({
             where: {
                 status: 1,
                 ...findOptions,
@@ -244,6 +269,17 @@ export class PersonalChargeService {
                 }
             }, select
         });
+        await Promise.all(findResults.map((item) => {
+            return new Promise(async (resolve, reject) => {
+                const userFind = await this.usersService.findOneById(findOptions.created_by)
+                // @ts-ignore
+                item.avatar = userFind.avatar
+                // @ts-ignore
+                item.nickname = userFind.nickname
+                resolve('ready');
+            });
+        }));
+        return findResults;
     }
 
     /**

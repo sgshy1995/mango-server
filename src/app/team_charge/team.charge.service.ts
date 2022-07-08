@@ -170,6 +170,31 @@ export class TeamChargeService {
     }
 
     /**
+     * 近期查询
+     * */
+    async findManyChargesRecentByTime(created_by: number, time_start: string, time_end: string): Promise<ResponseResult> {
+        const selectOptions = {
+            id: true,
+            created_by: true,
+            charge_type: true,
+            balance_type: true,
+            charge_time: true,
+            charge_num: true,
+            remark: true,
+            created_at: true
+        };
+        // @ts-ignore
+        const personalCharges = await this.findMany({
+            created_by
+        }, {charge_time_range: [time_start, time_end]}, selectOptions);
+        return {
+            code: HttpStatus.OK,
+            message: '查询成功',
+            data: personalCharges
+        };
+    }
+
+    /**
      * 多路查询
      *
      * @param findOptions Record<>
@@ -244,20 +269,31 @@ export class TeamChargeService {
      @param select select conditions
      */
     public async findMany(findOptions: TeamCharge, customFindOptions?: { charge_time_range: string[] }, select?: FindOptionsSelect<TeamCharge>): Promise<TeamCharge[] | undefined> {
-        return await this.teamChargeRepo.find({
+        const findResults = await this.teamChargeRepo.find({
             where: {
                 status: 1,
                 ...findOptions,
-                charge_time: (customFindOptions.charge_time_range && customFindOptions.charge_time_range.length && customFindOptions.charge_time_range.length === 2) ?
+                charge_time: (customFindOptions && customFindOptions.charge_time_range && customFindOptions.charge_time_range.length && customFindOptions.charge_time_range.length === 2) ?
                     Between(customFindOptions.charge_time_range[0], customFindOptions.charge_time_range[1]) :
                     findOptions.charge_time ?
                         findOptions.charge_time : undefined
             }, order: {
-                id: {
+                created_at: {
                     direction: 'asc'
                 }
             }, select
         });
+        await Promise.all(findResults.map((item) => {
+            return new Promise(async (resolve, reject) => {
+                const userFind = await this.userService.findOneById(item.created_by)
+                // @ts-ignore
+                item.avatar = userFind.avatar
+                // @ts-ignore
+                item.nickname = userFind.nickname
+                resolve('ready');
+            });
+        }));
+        return findResults;
     }
 
     /**
