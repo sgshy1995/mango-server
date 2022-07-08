@@ -303,6 +303,7 @@ export class PersonalChargeService {
             times: string[]
             spend: number[]
             income: number[]
+            balance_type?: number
         }
 
         // 生成指定长度的全部元素都为0的数组
@@ -398,7 +399,8 @@ export class PersonalChargeService {
                     showResults.items[item.charge_type] = {
                         times: time_type === 'week' ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] : sortKeys,
                         spend: generateZeroArray(sortKeys.length),
-                        income: generateZeroArray(sortKeys.length)
+                        income: generateZeroArray(sortKeys.length),
+                        balance_type: item.balance_type
                     };
                     item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
                 }
