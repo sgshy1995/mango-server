@@ -24,7 +24,7 @@ const isProd = process.env.NODE_ENV === 'production';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: jwtConfig().secret,
-      signOptions: { expiresIn: '7d' }, // token 过期时效
+      signOptions: { expiresIn: '30d' }, // token 过期时效
     }),
     UserModule
   ],
