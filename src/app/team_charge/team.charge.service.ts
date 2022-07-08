@@ -279,7 +279,7 @@ export class TeamChargeService {
                         findOptions.charge_time : undefined
             }, order: {
                 created_at: {
-                    direction: 'asc'
+                    direction: 'desc'
                 }
             }, select
         });

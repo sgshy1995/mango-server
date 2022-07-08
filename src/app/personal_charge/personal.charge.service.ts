@@ -265,7 +265,7 @@ export class PersonalChargeService {
                         findOptions.charge_time : undefined
             }, order: {
                 created_at: {
-                    direction: 'asc'
+                    direction: 'desc'
                 }
             }, select
         });
