@@ -172,7 +172,7 @@ export class TeamChargeService {
     /**
      * 近期查询
      * */
-    async findManyChargesRecentByTime(created_by: number, time_start: string, time_end: string): Promise<ResponseResult> {
+    async findManyChargesRecentByTime(team_id: number, time_start: string, time_end: string): Promise<ResponseResult> {
         const selectOptions = {
             id: true,
             created_by: true,
@@ -185,7 +185,7 @@ export class TeamChargeService {
         };
         // @ts-ignore
         const personalCharges = await this.findMany({
-            created_by
+            team_id
         }, {charge_time_range: [time_start, time_end]}, selectOptions);
         return {
             code: HttpStatus.OK,
