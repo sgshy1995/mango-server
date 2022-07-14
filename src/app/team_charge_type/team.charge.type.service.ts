@@ -6,6 +6,7 @@ import {ResponseResult} from '../../types/result.interface';
 import {UserService} from '../user/user.service';
 import {TeamService} from '../team/team.service';
 import {TeamChargeService} from '../team_charge/team.charge.service';
+import {TeamSortService} from '../team_sort/team.sort.service';
 import {v4 as uuidV4} from 'uuid';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class TeamChargeTypeService {
         @InjectRepository(TeamChargeType) private readonly teamChargeTypeRepo: Repository<TeamChargeType>,  // 使用泛型注入对应类型的存储库实例
         private readonly usersService: UserService,
         private readonly teamService: TeamService,
-        private readonly teamChargeService: TeamChargeService
+        private readonly teamChargeService: TeamChargeService,
+        private readonly teamSortService: TeamSortService
     ) {
     }
 
@@ -61,7 +63,7 @@ export class TeamChargeTypeService {
         }
 
         // 校验数量信息
-        const readyFind =  await this.findManyByTeamId(teamChargeType.team_id);
+        const readyFind =  await this.findManyByTeamIdAndBalanceType(teamChargeType.team_id, teamChargeType.balance_type);
         if (readyFind && readyFind.length >= 20) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '最多添加20个分类';
@@ -78,6 +80,14 @@ export class TeamChargeTypeService {
         teamChargeType.created_type = 'custom';
 
         await this.teamChargeTypeRepo.save(teamChargeType);
+
+        // 检查 sort info, 并更新
+        await this.findMany(teamChargeType)
+        const teamSort = await this.teamSortService.findOneByTeamIdAndBalanceType(teamChargeType.team_id, teamChargeType.balance_type)
+        const teamSortIds = teamSort.types_ids_sort.split(',')
+        if(!teamSortIds.find(id => id === teamSort.id.toString())) teamSortIds.push(teamSort.id.toString())
+        teamSort.types_ids_sort = teamSortIds.join()
+        await this.teamSortService.updateTeamSort(teamSort.id, teamSort.types_ids_sort)
 
         responseBody.code = HttpStatus.CREATED;
 
@@ -111,9 +121,16 @@ export class TeamChargeTypeService {
                 return await this.teamChargeService.updateTeamCharge(item.id,item.charge_num,item.remark, item.status);
             })
         )
-        // 更新数据时，删除 id，以避免请求体内传入 id
-        teamChargeType.hasOwnProperty('id') && delete teamChargeType.id;
         await this.teamChargeTypeRepo.update(id, teamChargeType);
+        // 检查 sort info, 并更新
+        await this.findMany(teamChargeType)
+        const teamSort = await this.teamSortService.findOneByTeamIdAndBalanceType(teamChargeType.team_id, teamChargeType.balance_type)
+        const teamSortIds = teamSort.types_ids_sort.split(',')
+        const findIndex = teamSortIds.findIndex(id => id === teamChargeType.id.toString())
+        if(findIndex > -1) teamSortIds.splice(findIndex, 1)
+        teamSort.types_ids_sort = teamSortIds.join()
+        await this.teamSortService.updateTeamSort(teamSort.id, teamSort.types_ids_sort)
+
         return responseBody;
     }
 
@@ -233,7 +250,21 @@ export class TeamChargeTypeService {
      */
     public async findManyByTeamId(team_id: number, select?: FindOptionsSelect<TeamChargeType>): Promise<TeamChargeType[] | undefined> {
         return await this.teamChargeTypeRepo.find({where: {team_id, status: 1}, order: {
-                created_at: {
+                id: {
+                    direction: 'asc'
+                }
+            }, select});
+    }
+
+    /**
+     * 根据 team_id 查询多个信息，如果不存在则抛出404异常
+     * @param team_id team_id
+     * @param balance_type balance_type
+     * @param select select conditions
+     */
+    public async findManyByTeamIdAndBalanceType(team_id: number, balance_type: number, select?: FindOptionsSelect<TeamChargeType>): Promise<TeamChargeType[] | undefined> {
+        return await this.teamChargeTypeRepo.find({where: {team_id, balance_type, status: 1}, order: {
+                id: {
                     direction: 'asc'
                 }
             }, select});
@@ -271,6 +302,35 @@ export class TeamChargeTypeService {
                 }
             }, select
         });
-        return teamChargeTypesDefault.concat(teamChargeTypesFind)
+        let teamChargeTypes = teamChargeTypesDefault.concat(teamChargeTypesFind)
+
+        // 查询 sort 信息
+        console.log('findOptions.balance_type =============', findOptions.balance_type)
+        let teamSort = await this.teamSortService.findOneByTeamIdAndBalanceType(Number(findOptions.team_id), Number(findOptions.balance_type))
+        // 如果 sort 记录不存在，则创建一条
+        if (!teamSort){
+            teamSort = {
+                team_id: Number(findOptions.team_id),
+                created_at: null,
+                updated_at: null,
+                types_ids_sort: teamChargeTypes.map(item=>item.id).join(),
+                status: 1,
+                balance_type: Number(findOptions.balance_type),
+                id: null
+            }
+            await this.teamSortService.createTeamSort(teamSort)
+        }else{
+            console.log('进入 else =============')
+            const teamChargeTypesReturn: TeamChargeType[] = []
+            const ids = teamSort.types_ids_sort.split(',').map(id=>Number(id))
+            ids.forEach(id=>{
+                const itemFind = teamChargeTypes.find(item=>item.id===id)
+                if (itemFind){
+                    teamChargeTypesReturn.push(itemFind)
+                }
+            })
+            teamChargeTypes = [...teamChargeTypesReturn]
+        }
+        return teamChargeTypes
     }
 }

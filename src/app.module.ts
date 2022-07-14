@@ -36,6 +36,8 @@ import {InfoModule} from './app/info/info.module';
 import {MemorialDayModule} from './app/memorial_day/memorial.day.module';
 import {BirthdayModule} from './app/birthday/birthday.module';
 import {BacklogModule} from './app/backlog/backlog.module';
+import {PersonalSortModule} from './app/personal_sort/personal.sort.module';
+import {TeamSortModule} from './app/team_sort/team.sort.module';
 
 @Module({
     imports: [
@@ -65,7 +67,9 @@ import {BacklogModule} from './app/backlog/backlog.module';
         AuthModule,
         MemorialDayModule,
         BirthdayModule,
-        BacklogModule
+        BacklogModule,
+        PersonalSortModule,
+        TeamSortModule
     ],
     controllers: [AppController, UserController],
     providers: [

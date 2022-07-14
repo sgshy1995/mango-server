@@ -7,6 +7,7 @@ import {PersonalChargeType} from '../../db/entities/PersonalChargeType';
 import {ResponseResult} from '../../types/result.interface';
 import {UserService} from '../user/user.service';
 import {PersonalChargeService} from '../personal_charge/personal.charge.service';
+import {PersonalSortService} from '../personal_sort/personal.sort.service';
 import {v4 as uuidV4} from 'uuid';
 
 @Injectable()
@@ -14,7 +15,8 @@ export class PersonalChargeTypeService {
     constructor(
         @InjectRepository(PersonalChargeType) private readonly personalChargeTypeRepo: Repository<PersonalChargeType>,  // 使用泛型注入对应类型的存储库实例
         private readonly usersService: UserService,
-        private readonly personalChargeService: PersonalChargeService
+        private readonly personalChargeService: PersonalChargeService,
+        private readonly personalSortService: PersonalSortService
     ) {
     }
 
@@ -53,7 +55,7 @@ export class PersonalChargeTypeService {
         }
 
         // 校验数量信息
-        const readyFind =  await this.findManyByCreatedBy(personalChargeType.created_by);
+        const readyFind =  await this.findManyByCreatedByAndBalanceType(personalChargeType.created_by, personalChargeType.balance_type);
         if (readyFind && readyFind.length >= 20) {
             responseBody.code = HttpStatus.CONFLICT;
             responseBody.message = '最多添加20个分类';
@@ -70,6 +72,14 @@ export class PersonalChargeTypeService {
         personalChargeType.created_type = 'custom';
 
         await this.personalChargeTypeRepo.save(personalChargeType);
+
+        // 检查 sort info, 并更新
+        await this.findMany(personalChargeType)
+        const personalSort = await this.personalSortService.findOneByCreatedByAndBalanceType(personalChargeType.created_by, personalChargeType.balance_type)
+        const personalSortIds = personalSort.types_ids_sort.split(',')
+        if(!personalSortIds.find(id => id === personalChargeType.id.toString())) personalSortIds.push(personalChargeType.id.toString())
+        personalSort.types_ids_sort = personalSortIds.join()
+        await this.personalSortService.updatePersonalSort(personalSort.id, personalSort.types_ids_sort)
 
         responseBody.code = HttpStatus.CREATED;
 
@@ -103,9 +113,16 @@ export class PersonalChargeTypeService {
                 return await this.personalChargeService.updatePersonalCharge(item.id, item.charge_num, item.remark, item.status);
             })
         );
-        // 更新数据时，删除 id，以避免请求体内传入 id
-        personalChargeType.hasOwnProperty('id') && delete personalChargeType.id;
         await this.personalChargeTypeRepo.update(id, personalChargeType);
+        // 检查 sort info, 并更新
+        await this.findMany(personalChargeType)
+        const personalSort = await this.personalSortService.findOneByCreatedByAndBalanceType(personalChargeType.created_by, personalChargeType.balance_type)
+        const personalSortIds = personalSort.types_ids_sort.split(',')
+        const findIndex = personalSortIds.findIndex(id => id === personalChargeType.id.toString())
+        if(findIndex > -1) personalSortIds.splice(findIndex, 1)
+        personalSort.types_ids_sort = personalSortIds.join()
+        await this.personalSortService.updatePersonalSort(personalSort.id, personalSort.types_ids_sort)
+
         return responseBody;
     }
 
@@ -232,6 +249,22 @@ export class PersonalChargeTypeService {
     }
 
     /**
+     * 根据 create_by 查询多个信息，如果不存在则抛出404异常
+     * @param created_by created_by
+     * @param balance_type balance_type
+     * @param select select conditions
+     */
+    public async findManyByCreatedByAndBalanceType(created_by: number, balance_type: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType[] | undefined> {
+        return await this.personalChargeTypeRepo.find({
+            where: {created_by, balance_type, status: 1}, order: {
+                id: {
+                    direction: 'asc'
+                }
+            }, select
+        });
+    }
+
+    /**
      * 根据参数查询多个信息，如果不存在则抛出404异常
      * @param findOptions findOptions
      @param select select conditions
@@ -261,6 +294,36 @@ export class PersonalChargeTypeService {
                 }
             }, select
         });
-        return personalChargeTypesDefault.concat(personalChargeTypesFind)
+
+        let personalChargeTypes = personalChargeTypesDefault.concat(personalChargeTypesFind)
+
+        // 查询 sort 信息
+        console.log('findOptions.balance_type =============', findOptions.balance_type)
+        let personalSort = await this.personalSortService.findOneByCreatedByAndBalanceType(Number(findOptions.created_by), Number(findOptions.balance_type))
+        // 如果 sort 记录不存在，则创建一条
+        if (!personalSort){
+            personalSort = {
+                created_by: Number(findOptions.created_by),
+                created_at: null,
+                updated_at: null,
+                types_ids_sort: personalChargeTypes.map(item=>item.id).join(),
+                status: 1,
+                balance_type: Number(findOptions.balance_type),
+                id: null
+            }
+            await this.personalSortService.createPersonalSort(personalSort)
+        }else{
+            console.log('进入 else =============')
+            const personalChargeTypesReturn: PersonalChargeType[] = []
+            const ids = personalSort.types_ids_sort.split(',').map(id=>Number(id))
+            ids.forEach(id=>{
+                const itemFind = personalChargeTypes.find(item=>item.id===id)
+                if (itemFind){
+                    personalChargeTypesReturn.push(itemFind)
+                }
+            })
+            personalChargeTypes = [...personalChargeTypesReturn]
+        }
+        return personalChargeTypes
     }
 }
