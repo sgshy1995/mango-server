@@ -28,6 +28,8 @@
     "@nestjs/passport": "^8.2.1",
     "@nestjs/platform-express": "^8.0.0",
     "@nestjs/typeorm": "^8.0.3",
+    "axios": "^0.27.2",
+    "cheerio": "^1.0.0-rc.12",
     "cross-env": "^7.0.3",
     "ioredis": "^5.0.3",
     "moment": "^2.29.2",
