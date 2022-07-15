@@ -84,7 +84,6 @@ export class TeamChargeController {
         const {team_id, time_start, time_end} = timeOptions;
         const res = await this.teamChargeService.findManyChargesRecentByTime(Number(team_id), time_start, time_end);
         response.status(res.code);
-        console.log('res', res)
         return res;
     }
 }

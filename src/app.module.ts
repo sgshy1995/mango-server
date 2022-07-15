@@ -38,6 +38,7 @@ import {BirthdayModule} from './app/birthday/birthday.module';
 import {BacklogModule} from './app/backlog/backlog.module';
 import {PersonalSortModule} from './app/personal_sort/personal.sort.module';
 import {TeamSortModule} from './app/team_sort/team.sort.module';
+import {AssistantModule} from './app/assistant/assistant.module';
 
 @Module({
     imports: [
@@ -69,7 +70,8 @@ import {TeamSortModule} from './app/team_sort/team.sort.module';
         BirthdayModule,
         BacklogModule,
         PersonalSortModule,
-        TeamSortModule
+        TeamSortModule,
+        AssistantModule
     ],
     controllers: [AppController, UserController],
     providers: [

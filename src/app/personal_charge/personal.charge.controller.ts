@@ -84,7 +84,6 @@ export class PersonalChargeController {
         const {created_by, time_start, time_end} = timeOptions;
         const res = await this.personalChargeService.findManyChargesRecentByTime(Number(created_by), time_start, time_end);
         response.status(res.code);
-        console.log('res', res)
         return res;
     }
 }
