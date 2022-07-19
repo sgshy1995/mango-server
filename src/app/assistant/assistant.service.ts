@@ -238,12 +238,18 @@ export class AssistantService {
         try {
             const location = await getCityInfo();
             const locationInfo = (location.location && location.location[0]) ? location.location[0] : {}
-            const weather = await getWeatherInfoNow(locationInfo.id);
-            responseBody.data.now = weather.now ? weather.now : [];
-            const daily = await getWeatherInfoDaily(locationInfo.id);
-            responseBody.data.daily = daily.hourly ? daily.hourly : [];
-            const d7 = await getWeatherInfo7d(locationInfo.id);
-            responseBody.data.d7 = d7.daily ? d7.daily : [];
+            await Promise.all([
+                getWeatherInfoNow(locationInfo.id),
+                getWeatherInfoDaily(locationInfo.id),
+                getWeatherInfo7d(locationInfo.id)
+            ]).then(responses=>{
+                const weather = responses[0];
+                responseBody.data.now = weather.now ? weather.now : [];
+                const daily = responses[1];
+                responseBody.data.daily = daily.hourly ? daily.hourly : [];
+                const d7 = responses[2];
+                responseBody.data.d7 = d7.daily ? d7.daily : [];
+            })
         } catch (e) {
             responseBody.data && delete responseBody.data;
             responseBody.message = e;
