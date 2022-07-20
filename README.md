@@ -35,7 +35,7 @@ DATABASE_PORT=3306
 DATABASE_USERNAME=root
 DATABASE_PASSWORD=xxx
 # secret_key to generate jwt
-SECRET_KEY=xxx_xxx_xxx
+SECRET_KEY=xxxxxx
 # redis
 REDIS_HOST=localhost
 REDIS_PORT=6379
@@ -43,6 +43,13 @@ REDIS_DB=0
 REDIS_PASSWORD=
 # upload path
 UPLOAD_PATH=xxx/xxx/
+# mail config
+MAIL_HOST=xx.xx.com
+MAIL_PORT=465
+MAIL_USER=xxx@xx.xx
+MAIL_PASS=xxx
+# private yard (if you need)
+PRIVATE_YARD=xxxxxx
 ```
 
 ## Description
