@@ -27,7 +27,7 @@ export class UserService {
          */
         let responseBody = {code: HttpStatus.OK, message: '创建成功'};
         // 校验用户信息
-        if (!user.username || !user.nickname || !user.password || !user.private_yard) {
+        if (!user.username || !user.nickname || !user.password || !user.private_yard || !user.email) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
             return responseBody;
@@ -49,6 +49,11 @@ export class UserService {
             responseBody.message = '密码必须同时包含大写字母、小写字母、数字、特殊符号等四项中的至少两项，且在20位以内';
             return responseBody;
         }
+        if (!isEmail(user.email)) {
+            responseBody.code = HttpStatus.BAD_REQUEST;
+            responseBody.message = '邮箱格式错误';
+            return responseBody;
+        }
 
         // 内测码验证
         if (user.private_yard !== process.env.PRIVATE_YARD){
@@ -57,6 +62,7 @@ export class UserService {
             return responseBody;
         }
 
+        // 是否有重复的用户名
         const userInfoExistUsername = await this.userRepo.findOne({
             where: {
                 username: user.username
@@ -67,6 +73,8 @@ export class UserService {
             responseBody.message = '用户名已存在';
             return responseBody;
         }
+
+        // 是否有重复的昵称
         const userInfoExistNickname = await this.userRepo.findOne({
             where: {
                 nickname: user.nickname
@@ -77,6 +85,19 @@ export class UserService {
             responseBody.message = '昵称已存在';
             return responseBody;
         }
+
+        // 是否有重复的邮箱
+        const userInfoExistEmail = await this.userRepo.findOne({
+            where: {
+                email: user.email
+            }
+        });
+        if (userInfoExistEmail) {
+            responseBody.code = HttpStatus.CONFLICT;
+            responseBody.message = '邮箱已被注册';
+            return responseBody;
+        }
+
         // 处理密码
         const salt = makeSalt(); // 制作密码盐
         user.password = encryptPassword(user.password, salt);  // 加密密码
@@ -290,7 +311,7 @@ export class UserService {
      @param select select conditions
      */
     public async findOneByUsername(username: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
-        return await this.userRepo.findOne({where: {username}, select});
+        return await this.userRepo.findOne({where: {username, status: 1}, select});
     }
 
     /**
@@ -299,7 +320,16 @@ export class UserService {
      @param select select conditions
      */
     public async findOneByNickname(nickname: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
-        return await this.userRepo.findOne({where: {nickname}, select});
+        return await this.userRepo.findOne({where: {nickname, status: 1}, select});
+    }
+
+    /**
+     * 根据 email 查询单个信息，如果不存在则抛出404异常
+     * @param email email
+     @param select select conditions
+     */
+    public async findOneByEmail(email: string, select?: FindOptionsSelect<User>): Promise<User | undefined> {
+        return await this.userRepo.findOne({where: {email, status: 1}, select});
     }
 
     /**

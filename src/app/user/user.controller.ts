@@ -70,23 +70,28 @@ export class UserController {
     }
 
     @Post('login')
-    async login(@Body() User: User & { capture: string, device_id: string }, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
+    async login(@Body() loginInfo: {user: User, option: { capture: string, device_id: string, login_type: string }}, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
         console.log('JWT验证 - Step 1: 用户请求登录');
-        const validateCaptureResult = await this.authService.validateCapture(User.device_id, User.capture);
+        // 校验验证码
+        const validateCaptureResult = await this.authService.validateCapture(loginInfo.option.device_id, loginInfo.option.capture);
         if (validateCaptureResult) {
             response.status(validateCaptureResult.code);
             return validateCaptureResult;
         }
-        const authResult = await this.authService.validateUser(User.username, User.password);
+
+        const authResult = loginInfo.option.login_type === 'username' ?
+            await this.authService.validateUserByUsername(loginInfo.user.username, loginInfo.user.password) :
+            await this.authService.validateUserByEmail(loginInfo.user.email, loginInfo.user.password)
+
         switch (authResult.code) {
             case 1:
-                const resRight = await this.authService.certificate(authResult.user);
+                const resRight = await this.authService.certificate(authResult.user, loginInfo.option.login_type);
                 response.status(resRight.code);
                 return resRight;
             default:
                 const resDefault = {
                     code: HttpStatus.BAD_REQUEST,
-                    message: `账号或密码不正确`,
+                    message: loginInfo.option.login_type === 'username' ? '账号或密码不正确' : '邮箱或密码不正确',
                 };
                 response.status(resDefault.code);
                 return resDefault;
@@ -103,17 +108,27 @@ export class UserController {
     }
 
     @Post()
-    async createUser(@Body() User: User & { capture: string, device_id: string }, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
-        const bodyCopy = Object.assign({}, User);
-        const validateCaptureResult = await this.authService.validateCapture(User.device_id, User.capture);
+    async createUser(@Body() loginInfo: {user: User, option: { capture: string, device_id: string, capture_email: string }}, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
+        const bodyCopy = Object.assign({}, loginInfo.user);
+
+        // 校验验证码
+        const validateCaptureResult = await this.authService.validateCapture(loginInfo.option.device_id, loginInfo.option.capture);
         if (validateCaptureResult) {
             response.status(validateCaptureResult.code);
             return validateCaptureResult;
         }
-        const res = await this.UserService.createUser(User);
+
+        // 校验邮箱验证码
+        const validateCaptureEmailResult = await this.authService.validateCaptureEmail(loginInfo.option.device_id, loginInfo.user.email, loginInfo.option.capture_email);
+        if (validateCaptureEmailResult) {
+            response.status(validateCaptureEmailResult.code);
+            return validateCaptureEmailResult;
+        }
+
+        const res = await this.UserService.createUser(loginInfo.user);
         if (res.code === HttpStatus.CREATED) {
-            const authResult = await this.authService.validateUser(bodyCopy.username, bodyCopy.password);
-            res.data = (await this.authService.certificate(authResult.user)).data;
+            const authResult = await this.authService.validateUserByUsername(bodyCopy.username, bodyCopy.password);
+            res.data = (await this.authService.certificate(authResult.user, 'username')).data;
         }
         response.status(res.code);
         return res;

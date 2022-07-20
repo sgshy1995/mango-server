@@ -28,7 +28,7 @@ async function mail(code: string, send_to: string) {
             from: `"懒比蛋生活" <${mailConfig().user}>`, // 发送方邮箱的账号
             to: send_to, // 邮箱接受者的账号
             subject: '邮箱验证码', // Subject line
-            html: `欢迎注册「懒比蛋生活」, 您的邮箱验证码是: <br/><br/><b style="font-size: 16px">${code}</b><br/><br/><span style="font-size: 10px">请勿泄露验证码；如果你没有注册过「懒比蛋生活」，请忽略本邮件。</span><br/><br/><span style="font-size: 10px">我是「懒比蛋生活」智能机器人邮箱账号，请勿回复本邮件，有问题请发送邮件至<a href="mailto:support@eden-life.net.cn">support@eden-life.net.cn</a>。</span>`, // html 内容, 如果设置了html内容, 将忽略text内容
+            html: `欢迎注册「懒比蛋生活」, 您的邮箱验证码是: <br/><br/><b style="font-size: 20px">${code}</b><br/><br/>有效期：5分钟<br/><br/><span style="font-size: 10px">请勿泄露验证码；如果你没有注册过「懒比蛋生活」，请忽略本邮件。</span><br/><br/><span style="font-size: 10px">我是「懒比蛋生活」智能机器人邮箱账号，请勿回复本邮件，有问题请发送邮件至<a href="mailto:support@eden-life.net.cn">support@eden-life.net.cn</a>。</span>`, // html 内容, 如果设置了html内容, 将忽略text内容
         }).then(res => {
             resolve(res);
         }).catch(err => {

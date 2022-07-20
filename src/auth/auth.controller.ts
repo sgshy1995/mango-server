@@ -27,4 +27,11 @@ export class AuthController {
         }
         return res;
     }
+
+    @Get('capture_email')
+    async getCaptureEmail(@Query() device_id_info: {device_id: string, email: string}, @Res({passthrough: true}) response: Response): Promise<Response | void | Record<string, any>> {
+        const res = await this.authService.generateCaptureEmail(device_id_info.device_id, device_id_info.email);
+        response.status(res.code);
+        return res;
+    }
 }
