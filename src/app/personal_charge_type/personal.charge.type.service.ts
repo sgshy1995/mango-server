@@ -1,6 +1,6 @@
 // noinspection DuplicatedCode
 
-import {HttpStatus, Injectable} from '@nestjs/common';
+import {forwardRef, HttpStatus, Inject, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, FindOptionsSelect, Between} from 'typeorm';
 import {PersonalChargeType} from '../../db/entities/PersonalChargeType';
@@ -15,6 +15,7 @@ export class PersonalChargeTypeService {
     constructor(
         @InjectRepository(PersonalChargeType) private readonly personalChargeTypeRepo: Repository<PersonalChargeType>,  // 使用泛型注入对应类型的存储库实例
         private readonly usersService: UserService,
+        @Inject(forwardRef(()=>PersonalChargeService))
         private readonly personalChargeService: PersonalChargeService,
         private readonly personalSortService: PersonalSortService
     ) {
@@ -231,6 +232,16 @@ export class PersonalChargeTypeService {
      */
     public async findOneByName(name: string, created_by?: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType | undefined> {
         return await this.personalChargeTypeRepo.findOne({where: {name, created_by, status: 1}, select});
+    }
+
+    /**
+     * 根据 realname 查询单个信息，如果不存在则抛出404异常
+     * @param realname realname
+     * @param created_by created_by
+     * @param select select conditions
+     */
+    public async findOneByRealname(realname: string, created_by?: number, select?: FindOptionsSelect<PersonalChargeType>): Promise<PersonalChargeType | undefined> {
+        return await this.personalChargeTypeRepo.findOne({where: {realname, created_by, status: 1}, select});
     }
 
     /**

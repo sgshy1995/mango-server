@@ -223,6 +223,18 @@ export class UserService {
     }
 
     /**
+     * 更新
+     *
+     * @param id ID
+     * @param user User 实体对象
+     */
+    async update(id: number, user: User): Promise<ResponseResult> {
+        let responseBody = {code: HttpStatus.OK, message: '更新成功'};
+        await this.userRepo.update(id, user);
+        return responseBody;
+    }
+
+    /**
      * 根据ID查询
      *
      * @param id ID

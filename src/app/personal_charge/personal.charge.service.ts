@@ -1,4 +1,4 @@
-import {HttpStatus, Injectable} from '@nestjs/common';
+import {HttpStatus, Injectable, forwardRef, Inject} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, FindOptionsSelect, Between} from 'typeorm';
 import {PersonalCharge} from '../../db/entities/PersonalCharge';
@@ -6,12 +6,15 @@ import {ResponseResult} from '../../types/result.interface';
 import {UserService} from '../user/user.service';
 import moment = require('moment');
 import {getWeeks} from '../../utils/getWeeks';
+import {PersonalChargeTypeService} from '../personal_charge_type/personal.charge.type.service';
 
 @Injectable()
 export class PersonalChargeService {
     constructor(
         @InjectRepository(PersonalCharge) private readonly personalChargeRepo: Repository<PersonalCharge>,  // 使用泛型注入对应类型的存储库实例
-        private readonly usersService: UserService
+        private readonly usersService: UserService,
+        @Inject(forwardRef(() => PersonalChargeTypeService))
+        private readonly personalChargeTypeService: PersonalChargeTypeService
     ) {
     }
 
@@ -271,11 +274,11 @@ export class PersonalChargeService {
         });
         await Promise.all(findResults.map((item) => {
             return new Promise(async (resolve, reject) => {
-                const userFind = await this.usersService.findOneById(findOptions.created_by)
+                const userFind = await this.usersService.findOneById(findOptions.created_by);
                 // @ts-ignore
-                item.avatar = userFind.avatar
+                item.avatar = userFind.avatar;
                 // @ts-ignore
-                item.nickname = userFind.nickname
+                item.nickname = userFind.nickname;
                 resolve('ready');
             });
         }));
@@ -340,6 +343,7 @@ export class PersonalChargeService {
             spend: number[]
             income: number[]
             balance_type?: number
+            charge_name?: string
         }
 
         // 生成指定长度的全部元素都为0的数组
@@ -417,14 +421,15 @@ export class PersonalChargeService {
             },
             items: {}
         };
-        sortKeys.forEach((date, indexIn) => {
+        for (const date of sortKeys) {
+            const indexIn = sortKeys.indexOf(date);
             // 遍历每一个时间总记录
-            findResult[date].forEach(item => {
+            for (const item of findResult[date]) {
                 // 遍历每一个时间总记录中的一条记录
                 // total
                 item.balance_type ? showResults.total.income[indexIn] += item.charge_num : showResults.total.spend[indexIn] += item.charge_num;
-                showResults.total.income[indexIn] = Math.round(showResults.total.income[indexIn] * 100) / 100
-                showResults.total.spend[indexIn] = Math.round(showResults.total.spend[indexIn] * 100) / 100
+                showResults.total.income[indexIn] = Math.round(showResults.total.income[indexIn] * 100) / 100;
+                showResults.total.spend[indexIn] = Math.round(showResults.total.spend[indexIn] * 100) / 100;
                 // items 是否存在该类型的记录
                 if (showResults.items.hasOwnProperty(item.charge_type)) {
                     if (showResults.items[item.charge_type].times[indexIn] === null || showResults.items[item.charge_type].times[indexIn] === undefined) showResults.items[item.charge_type].times[indexIn] = date;
@@ -436,14 +441,15 @@ export class PersonalChargeService {
                         times: time_type === 'week' ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] : sortKeys,
                         spend: generateZeroArray(sortKeys.length),
                         income: generateZeroArray(sortKeys.length),
-                        balance_type: item.balance_type
+                        balance_type: item.balance_type,
+                        charge_name: ((await this.personalChargeTypeService.findOneByRealname(item.charge_type)) || {}).name
                     };
                     item.balance_type ? showResults.items[item.charge_type].income[indexIn] += item.charge_num : showResults.items[item.charge_type].spend[indexIn] += item.charge_num;
                 }
-                showResults.items[item.charge_type].income[indexIn] = Math.round(showResults.items[item.charge_type].income[indexIn] * 100) / 100
-                showResults.items[item.charge_type].spend[indexIn] = Math.round(showResults.items[item.charge_type].spend[indexIn] * 100) / 100
-            });
-        });
+                showResults.items[item.charge_type].income[indexIn] = Math.round(showResults.items[item.charge_type].income[indexIn] * 100) / 100;
+                showResults.items[item.charge_type].spend[indexIn] = Math.round(showResults.items[item.charge_type].spend[indexIn] * 100) / 100;
+            }
+        }
         return showResults;
     }
 }

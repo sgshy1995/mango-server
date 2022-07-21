@@ -1,4 +1,4 @@
-import {HttpStatus, Injectable} from '@nestjs/common';
+import {forwardRef, HttpStatus, Inject, Injectable} from '@nestjs/common';
 import {InjectRepository} from '@nestjs/typeorm';
 import {Repository, FindOptionsSelect, Between} from 'typeorm';
 import {TeamChargeType} from '../../db/entities/TeamChargeType';
@@ -15,6 +15,7 @@ export class TeamChargeTypeService {
         @InjectRepository(TeamChargeType) private readonly teamChargeTypeRepo: Repository<TeamChargeType>,  // 使用泛型注入对应类型的存储库实例
         private readonly usersService: UserService,
         private readonly teamService: TeamService,
+        @Inject(forwardRef(()=>TeamChargeService))
         private readonly teamChargeService: TeamChargeService,
         private readonly teamSortService: TeamSortService
     ) {
@@ -231,6 +232,16 @@ export class TeamChargeTypeService {
      */
     public async findOneById(id: number, select?: FindOptionsSelect<TeamChargeType>): Promise<TeamChargeType | undefined> {
         return await this.teamChargeTypeRepo.findOne({where: {id, status: 1}, select});
+    }
+
+    /**
+     * 根据 realname 查询单个信息，如果不存在则抛出404异常
+     * @param realname realname
+     * @param team_id team_id
+     * @param select select conditions
+     */
+    public async findOneByRealname(realname: string, team_id?: number, select?: FindOptionsSelect<TeamChargeType>): Promise<TeamChargeType | undefined> {
+        return await this.teamChargeTypeRepo.findOne({where: {realname, team_id, status: 1}, select});
     }
 
     /**

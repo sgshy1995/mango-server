@@ -1,4 +1,4 @@
-import {Module} from '@nestjs/common';
+import {Module, forwardRef} from '@nestjs/common';
 import {TypeOrmModule} from '@nestjs/typeorm';
 
 import {PersonalChargeTypeController} from './personal.charge.type.controller';
@@ -10,7 +10,7 @@ import {PersonalChargeModule} from '../personal_charge/personal.charge.module';
 import {PersonalSortModule} from '../personal_sort/personal.sort.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([PersonalChargeType]), UserModule, PersonalChargeModule, PersonalSortModule],
+    imports: [TypeOrmModule.forFeature([PersonalChargeType]), UserModule, PersonalSortModule, forwardRef(()=>PersonalChargeModule)],
     controllers: [PersonalChargeTypeController],
     providers: [PersonalChargeTypeService],
     exports: [PersonalChargeTypeService]

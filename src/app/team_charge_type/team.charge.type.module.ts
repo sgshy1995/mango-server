@@ -1,4 +1,4 @@
-import {Module} from '@nestjs/common';
+import {forwardRef, Module} from '@nestjs/common';
 import {TypeOrmModule} from '@nestjs/typeorm';
 
 import {TeamChargeTypeController} from './team.charge.type.controller';
@@ -11,7 +11,7 @@ import {TeamModule} from '../team/team.module';
 import {TeamSortModule} from '../team_sort/team.sort.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([TeamChargeType]), UserModule, TeamChargeModule, TeamModule, TeamSortModule],
+    imports: [TypeOrmModule.forFeature([TeamChargeType]), UserModule, TeamModule, TeamSortModule, forwardRef(() => TeamChargeModule)],
     controllers: [TeamChargeTypeController],
     providers: [TeamChargeTypeService],
     exports: [TeamChargeTypeService]

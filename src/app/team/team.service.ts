@@ -62,7 +62,7 @@ export class TeamService {
         const user = await this.usersService.findOneById(team.owner);
         user.team_id = team.id;
         user.team_name = team.name;
-        await this.usersService.updateUser(user.id, user);
+        await this.usersService.update(user.id, user);
 
         responseBody.code = HttpStatus.CREATED;
         responseBody.message = '创建成功';
