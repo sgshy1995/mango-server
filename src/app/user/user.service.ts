@@ -21,13 +21,13 @@ export class UserService {
      *
      * @param user User 实体对象
      */
-    async createUser(user: User & {private_yard?: string}): Promise<ResponseResult> {
+    async createUser(user: User): Promise<ResponseResult> {
         /**
          * 创建新的实体实例，并将此对象的所有实体属性复制到新实体中。 请注意，它仅复制实体模型中存在的属性。
          */
         let responseBody = {code: HttpStatus.OK, message: '创建成功'};
         // 校验用户信息
-        if (!user.username || !user.nickname || !user.password || !user.private_yard || !user.email) {
+        if (!user.username || !user.nickname || !user.password || !user.email) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '参数错误';
             return responseBody;
@@ -52,13 +52,6 @@ export class UserService {
         if (!isEmail(user.email)) {
             responseBody.code = HttpStatus.BAD_REQUEST;
             responseBody.message = '邮箱格式错误';
-            return responseBody;
-        }
-
-        // 内测码验证
-        if (user.private_yard !== process.env.PRIVATE_YARD){
-            responseBody.code = HttpStatus.BAD_REQUEST;
-            responseBody.message = '内测码错误';
             return responseBody;
         }
 
