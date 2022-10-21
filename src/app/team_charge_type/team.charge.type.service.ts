@@ -86,7 +86,7 @@ export class TeamChargeTypeService {
         await this.findMany(teamChargeType)
         const teamSort = await this.teamSortService.findOneByTeamIdAndBalanceType(teamChargeType.team_id, teamChargeType.balance_type)
         const teamSortIds = teamSort.types_ids_sort.split(',')
-        if(!teamSortIds.find(id => id === teamSort.id.toString())) teamSortIds.push(teamSort.id.toString())
+        if(!teamSortIds.includes(teamChargeType.id.toString())) teamSortIds.push(teamChargeType.id.toString())
         teamSort.types_ids_sort = teamSortIds.join()
         await this.teamSortService.updateTeamSort(teamSort.id, teamSort.types_ids_sort)
 
@@ -313,7 +313,8 @@ export class TeamChargeTypeService {
                 }
             }, select
         });
-        let teamChargeTypes = teamChargeTypesDefault.concat(teamChargeTypesFind)
+
+        let teamChargeTypes = [...teamChargeTypesDefault, ...teamChargeTypesFind]
 
         // 查询 sort 信息
         console.log('findOptions.balance_type =============', findOptions.balance_type)
